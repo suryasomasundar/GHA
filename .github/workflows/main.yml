@@ -20,7 +20,7 @@ jobs:
       - name: Install Dependencies
         run: |
           apt-get update
-          apt-get install -y wget unzip maven
+          apt-get install -y wget unzip maven nodejs npm
 
       - name: Download and Extract Project
         run: |
@@ -39,18 +39,7 @@ jobs:
             echo "❌ pom.xml is missing! Exiting..."
             exit 1
           fi
-          if [[ ! -f "/github/workspace/TestAppiumDemo/android-testng.xml" ]]; then
-            echo "❌ android-testng.xml is missing! Exiting..."
-            exit 1
-          fi
 
       - name: Run TestNG Tests
         working-directory: /github/workspace/TestAppiumDemo
         run: mvn clean test -DsuiteXmlFile=android-testng.xml
-
-      - name: Upload Test Results
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: test-results
-          path: /github/workspace/TestAppiumDemo/target/surefire-reports
