@@ -20,28 +20,21 @@ jobs:
       - name: Install Dependencies
         run: |
           apt-get update
-          apt-get install -y git wget curl unzip maven
+          apt-get install -y wget unzip maven nodejs npm
 
-      - name: Checkout Repository
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-          submodules: recursive  # Ensures submodules are checked out
-
-      - name: Fix Git Safe Directory Error
-        run: git config --global --add safe.directory "$(pwd)"
-
-      - name: Ensure TestAppiumDemo Exists
+      - name: Download and Extract Project
         run: |
-          if [[ ! -d "/github/workspace/TestAppiumDemo" ]]; then
-            echo "❌ TestAppiumDemo directory not found! Exiting..."
-            exit 1
-          fi
+          echo "📥 Downloading Project ZIP..."
+          wget -O /github/workspace/gha.zip "https://github.com/suryasomasundar/GHA/releases/download/automation/gha.zip"
+          
+          echo "📂 Extracting ZIP..."
+          unzip /github/workspace/gha.zip -d /github/workspace/
+          
+          echo "📂 Verifying Extracted Files..."
+          ls -la /github/workspace/
 
-      - name: Verify Repository Structure
+      - name: Verify Project Structure
         run: |
-          echo "Checking TestAppiumDemo directory:"
-          ls -la /github/workspace/TestAppiumDemo
           if [[ ! -f "/github/workspace/TestAppiumDemo/pom.xml" ]]; then
             echo "❌ pom.xml is missing! Exiting..."
             exit 1
