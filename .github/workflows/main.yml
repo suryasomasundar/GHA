@@ -37,6 +37,10 @@ jobs:
           unzip sdk-tools.zip -d $HOME/android-sdk
           rm sdk-tools.zip
           
+          # Create a 'latest' symlink to ensure sdkmanager is found
+          mkdir -p $HOME/android-sdk/cmdline-tools/latest
+          mv $HOME/android-sdk/cmdline-tools/* $HOME/android-sdk/cmdline-tools/latest/
+          
           # Set environment variables for Android SDK
           export ANDROID_HOME=$HOME/android-sdk
           export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator
@@ -67,4 +71,4 @@ jobs:
       - name: Run TestNG Tests (iOS)
         run: |
           # Run the iOS tests
-          mvn clean test -DsuiteXmlFile=ios-testng.xml  # Use your TestNG suite file for iOS tests
+          mvn clean test -DsuiteXmlFile=ios-testng.xml  # Use your T
