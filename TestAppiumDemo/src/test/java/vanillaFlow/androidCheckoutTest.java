@@ -20,10 +20,13 @@ public class androidCheckoutTest {
     @BeforeClass
 
     public void setUp() throws Exception {
+        // Get the APK path from the system property
+        String appPath = System.getProperty("appPath");
+
         UiAutomator2Options options = new UiAutomator2Options();
         options.setPlatformName("Android");
         options.setDeviceName("emulator-5554");
-        options.setApp("/Users/somu/Downloads/Android-MyDemoAppRN.1.3.0.build-244.apk");
+        options.setApp(appPath);
         options.setAutomationName("UiAutomator2");
         options.fullReset();
 
