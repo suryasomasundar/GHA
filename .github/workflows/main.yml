@@ -19,6 +19,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # Ensure full history for submodules
+
+      - name: Checkout Submodules (if any)
+        run: git submodule update --init --recursive
 
       - name: Download APK File from GitHub Releases
         run: |
@@ -26,16 +31,16 @@ jobs:
           wget -O /github/workspace/TestAppiumDemo/apk/Android-MyDemoAppRN.1.3.0.build-244.apk "https://github.com/suryasomasundar/GHA/releases/download/android-apk/Android-MyDemoAppRN.1.3.0.build-244.apk"
 
       - name: Debug Workspace
-        run: |
-          ls -la /github/workspace
+        run: ls -la /github/workspace
 
       - name: Debug TestAppiumDemo Directory
-        run: |
-          ls -la /github/workspace/TestAppiumDemo
+        run: ls -la /github/workspace/TestAppiumDemo || echo "TestAppiumDemo directory not found!"
+
+      - name: Check for pom.xml
+        run: ls -la /github/workspace/TestAppiumDemo/pom.xml || echo "pom.xml not found!"
 
       - name: Set Permissions
-        run: |
-          chmod -R 777 /github/workspace
+        run: chmod -R 777 /github/workspace
 
       - name: Set up Java
         uses: actions/setup-java@v2
@@ -54,8 +59,7 @@ jobs:
           apt-get install -y maven
 
       - name: Verify Maven Installation
-        run: |
-          mvn -version
+        run: mvn -version
 
       - name: Install Appium and Drivers
         run: |
@@ -69,6 +73,7 @@ jobs:
           sleep 10  # Wait for 10 seconds to ensure the server is ready
 
       - name: Run TestNG Tests
+        working-directory: /github/workspace/TestAppiumDemo
         run: |
-          cd /github/workspace/TestAppiumDemo
+          ls -la  # Debug to confirm files are present
           mvn clean test -DsuiteXmlFile=android-testng.xml -DappPath=/github/workspace/TestAppiumDemo/apk/Android-MyDemoAppRN.1.3.0.build-244.apk
