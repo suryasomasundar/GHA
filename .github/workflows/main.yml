@@ -19,13 +19,19 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v2
         with:
-          java-version: '11'  # Use Java 11
-          distribution: 'temurin'  # Use Eclipse Temurin distribution for JDK
+          java-version: '8'  # Use Java 8 for compatibility
+          distribution: 'temurin'
 
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'  # Use Node.js 18 (required for Appium)
+
+      - name: Install Dependencies
+        run: |
+          brew install wget
+          brew install unzip
+          brew install netcat
 
       - name: Install Appium and Drivers
         run: |
@@ -36,16 +42,16 @@ jobs:
       - name: Start Appium Server
         run: |
           appium &  # Start Appium server in the background
-          while ! nc -z localhost 4723; do sleep 1; done  # Wait for Appium server to be ready
+          sleep 10  # Wait for 10 seconds to ensure the server is ready
 
       - name: Set up Android SDK and Emulator
         run: |
           # Download and install Android Command Line Tools
           mkdir -p $HOME/android-sdk/cmdline-tools
           cd $HOME/android-sdk/cmdline-tools
-          wget https://dl.google.com/android/repository/commandlinetools-mac-10406996_latest.zip
-          unzip commandlinetools-mac-10406996_latest.zip
-          rm commandlinetools-mac-10406996_latest.zip
+          wget --tries=3 https://dl.google.com/android/repository/commandlinetools-mac-11076708_latest.zip
+          unzip commandlinetools-mac-11076708_latest.zip
+          rm commandlinetools-mac-11076708_latest.zip
 
           # Move the tools directory to the correct location
           mv cmdline-tools tools
@@ -58,17 +64,17 @@ jobs:
           yes | $ANDROID_HOME/cmdline-tools/tools/bin/sdkmanager --licenses
 
           # Install Android SDK components
-          $ANDROID_HOME/cmdline-tools/tools/bin/sdkmanager "platform-tools" "platforms;android-34" "system-images;android-34;google_apis;x86_64"
+          $ANDROID_HOME/cmdline-tools/tools/bin/sdkmanager "platform-tools" "platforms;android-33" "system-images;android-33;google_apis;x86_64"
 
           # Create and start an Android emulator
-          echo "no" | $ANDROID_HOME/cmdline-tools/tools/bin/avdmanager create avd -n test_emulator -k "system-images;android-34;google_apis;x86_64" -d "pixel_xl"
+          echo "no" | $ANDROID_HOME/cmdline-tools/tools/bin/avdmanager create avd -n test_emulator -k "system-images;android-33;google_apis;x86_64" -d "pixel_xl"
           $ANDROID_HOME/emulator/emulator -avd test_emulator -no-audio -no-boot-anim -no-window &
           $ANDROID_HOME/platform-tools/adb wait-for-device  # Wait for the emulator to be ready
 
       - name: Run TestNG Tests (Android)
         run: |
           cd TestAppiumDemo
-          mvn clean test -DsuiteXmlFile=android-testng.xml  # Run Android tests
+          mvn clean test -DsuiteXmlFile=android-testng.xml -DappPath=$GITHUB_WORKSPACE/TestAppiumDemo/apk/your-app.apk  # Pass the APK path to the tests
 
       - name: Set up iOS Simulator
         run: |
