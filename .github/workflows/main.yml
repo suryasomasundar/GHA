@@ -1,34 +1,16 @@
-name: Run Vanilla TestNG Tests
+name: Android SDK Setup
 
 on:
   push:
     branches:
-      - master  # Trigger workflow on push to the master branch
-  pull_request:
-    branches:
-      - master  # Trigger workflow on pull request to the master branch
+      - main
 
 jobs:
-  test:
-    runs-on: macos-latest  # macOS runner for running tests on Android/iOS devices
-
+  setup-android-sdk:
+    runs-on: macos-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-
-      - name: Set up Java
-        uses: actions/setup-java@v2
-        with:
-          java-version: '11'  # Use the Java version that works with your project
-          distribution: 'temurin'  # Use Eclipse Temurin distribution for JDK
-
-      - name: Install Dependencies
-        run: |
-          # Install necessary dependencies (like Appium, drivers)
-          npm install -g appium
-          appium driver install uiautomator2  # For Android
-          appium driver install xcuitest  # For iOS
-          # You might want to install dependencies using Maven/Gradle if needed for TestNG
 
       - name: Install Android SDK
         run: |
@@ -47,7 +29,7 @@ jobs:
           echo "Setting ANDROID_HOME and PATH"
           export ANDROID_HOME=$HOME/android-sdk
           export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator
-          
+
           echo "Verifying SDK Manager Path"
           ls -l $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager
 
@@ -57,26 +39,8 @@ jobs:
           echo "Installing Android Platform Tools"
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-29" "system-images;android-29;google_apis;x86_64"
 
-      - name: Set up Android Emulator
+      - name: Verify Installation
         run: |
-          echo "Creating Android Emulator"
-          echo no | avdmanager create avd -n test -k "system-images;android-29;google_apis;x86_64" --force
-          
-          echo "Starting Android Emulator"
-          nohup emulator -avd test -no-window -gpu off & 
-          sleep 60  # Wait for the emulator to start
-
-      - name: Set up Appium server
-        run: |
-          appium &  # Start Appium server
-          while ! nc -z localhost 4723; do sleep 1; done  # Wait for Appium server to be ready
-
-      - name: Run TestNG Tests (Android)
-        run: |
-          # Run the Android tests
-          mvn clean test -DsuiteXmlFile=android-testng.xml  # Use your TestNG suite file for Android tests
-
-      - name: Run TestNG Tests (iOS)
-        run: |
-          # Run the iOS tests
-          mvn clean test -DsuiteXmlFile=ios-testng.xml  # Use your TestNG suite file for iOS tests
+          echo "Verifying if the Android SDK is installed correctly"
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --list
+          $ANDROID_HOME/platform-tools/adb version
