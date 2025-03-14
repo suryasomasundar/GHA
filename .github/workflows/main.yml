@@ -3,24 +3,27 @@ name: Run Vanilla TestNG Tests
 on:
   push:
     branches:
-      - master  # Trigger workflow on push to the master branch
+      - master
   pull_request:
     branches:
-      - master  # Trigger workflow on pull request to the master branch
+      - master
 
 jobs:
   test:
-    runs-on: ubuntu-latest  # Use Ubuntu runner for simplicity
+    runs-on: ubuntu-latest
 
     container:
-      image: budtmo/docker-android:emulator_11.0  # Use Android 11 emulator image
-      options: --privileged --user root -v /github/workspace:/github/workspace  # Mount the workspace directory
+      image: budtmo/docker-android:emulator_11.0
+      options: --privileged --user root -v /github/workspace:/github/workspace
 
     steps:
+      - name: Install Git
+        run: apt-get update && apt-get install -y git
+
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
-          fetch-depth: 0  # Ensure full history for submodules
+          fetch-depth: 0
 
       - name: Checkout Submodules (if any)
         run: git submodule update --init --recursive
@@ -45,13 +48,13 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v2
         with:
-          java-version: '8'  # Use Java 8 for compatibility
+          java-version: '8'
           distribution: 'temurin'
 
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'  # Use Node.js 18 (required for Appium)
+          node-version: '18'
 
       - name: Install Maven
         run: |
@@ -64,16 +67,16 @@ jobs:
       - name: Install Appium and Drivers
         run: |
           npm install -g appium
-          appium driver install uiautomator2  # For Android
-          appium driver install xcuitest  # For iOS
+          appium driver install uiautomator2
+          appium driver install xcuitest
 
       - name: Start Appium Server
         run: |
-          appium &  # Start Appium server in the background
-          sleep 10  # Wait for 10 seconds to ensure the server is ready
+          appium &
+          sleep 10
 
       - name: Run TestNG Tests
         working-directory: /github/workspace/TestAppiumDemo
         run: |
-          ls -la  # Debug to confirm files are present
+          ls -la
           mvn clean test -DsuiteXmlFile=android-testng.xml -DappPath=/github/workspace/TestAppiumDemo/apk/Android-MyDemoAppRN.1.3.0.build-244.apk
