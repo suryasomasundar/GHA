@@ -38,12 +38,27 @@ jobs:
           appium &  # Start Appium server in the background
           while ! nc -z localhost 4723; do sleep 1; done  # Wait for Appium server to be ready
 
-      - name: Set up Android Emulator
+      - name: Set up Android SDK and Emulator
         run: |
-          # Install Android SDK and create an emulator
-          brew install --cask android-sdk
-          echo "y" | sdkmanager "platform-tools" "platforms;android-30" "system-images;android-30;google_apis;x86_64"
-          echo "no" | avdmanager create avd -n test_emulator -k "system-images;android-30;google_apis;x86_64" -d "pixel_xl"
+          # Download and install Android Command Line Tools
+          mkdir -p $HOME/android-sdk
+          cd $HOME/android-sdk
+          wget https://dl.google.com/android/repository/commandlinetools-mac-10406996_latest.zip
+          unzip commandlinetools-mac-10406996_latest.zip
+          rm commandlinetools-mac-10406996_latest.zip
+
+          # Set environment variables
+          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "PATH=$HOME/android-sdk/cmdline-tools/bin:$PATH" >> $GITHUB_ENV
+
+          # Accept licenses
+          yes | sdkmanager --licenses
+
+          # Install Android SDK components
+          sdkmanager "platform-tools" "platforms;android-34" "system-images;android-34;google_apis;x86_64"
+
+          # Create and start an Android emulator
+          echo "no" | avdmanager create avd -n test_emulator -k "system-images;android-34;google_apis;x86_64" -d "pixel_xl"
           emulator -avd test_emulator -no-audio -no-boot-anim -no-window &
           adb wait-for-device  # Wait for the emulator to be ready
 
