@@ -32,14 +32,18 @@ jobs:
 
       - name: Install Android SDK
         run: |
-          # Install Android SDK and tools
-          brew install --cask android-sdk
+          # Install Android SDK tools
+          curl -s https://dl.google.com/android/repository/commandlinetools-mac-8512546_latest.zip -o sdk-tools.zip
+          unzip sdk-tools.zip -d /usr/local/share/android-sdk
+          rm sdk-tools.zip
+          
+          # Set environment variables for Android SDK
           export ANDROID_HOME=/usr/local/share/android-sdk
-          export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
+          export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator
 
-          # Accept Android licenses
-          yes | sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-29" "system-images;android-29;google_apis;x86_64"
+          # Accept Android licenses and install required packages
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-29" "system-images;android-29;google_apis;x86_64"
 
       - name: Set up Android Emulator
         run: |
