@@ -44,11 +44,11 @@ jobs:
 
       - name: Verify Project Structure
         run: |
-          if test ! -f "/github/workspace/TestAppiumDemo/pom.xml"; then
+          if test ! -f "/github/workspace/gha/TestAppiumDemo/pom.xml"; then
             echo "❌ pom.xml is missing! Exiting..."
             exit 1
           fi
 
       - name: Run TestNG Tests
-        working-directory: /github/workspace/TestAppiumDemo
+        working-directory: /github/workspace/gha/TestAppiumDemo
         run: mvn clean test -DsuiteXmlFile=android-testng.xml
