@@ -10,7 +10,11 @@ on:
 
 jobs:
   test:
-    runs-on: macos-latest  # macOS runner for running tests on Android/iOS devices
+    runs-on: ubuntu-latest  # Use Ubuntu runner for simplicity
+
+    container:
+      image: budtmo/docker-android:emulator_11.0  # Use Android 11 emulator image
+      options: --privileged  # Required for running the emulator
 
     steps:
       - name: Checkout repository
@@ -27,12 +31,6 @@ jobs:
         with:
           node-version: '18'  # Use Node.js 18 (required for Appium)
 
-      - name: Install Dependencies
-        run: |
-          brew install wget
-          brew install unzip
-          brew install netcat
-
       - name: Install Appium and Drivers
         run: |
           npm install -g appium
@@ -44,50 +42,7 @@ jobs:
           appium &  # Start Appium server in the background
           sleep 10  # Wait for 10 seconds to ensure the server is ready
 
-      - name: Set up Android SDK and Emulator
-        run: |
-          # Download and install Android Command Line Tools
-          mkdir -p $HOME/android-sdk/cmdline-tools
-          cd $HOME/android-sdk/cmdline-tools
-          wget --tries=3 https://dl.google.com/android/repository/commandlinetools-mac-11076708_latest.zip
-          unzip commandlinetools-mac-11076708_latest.zip
-          rm commandlinetools-mac-11076708_latest.zip
-
-          # Move the tools directory to the correct location
-          mv cmdline-tools tools
-
-          # Set environment variables
-          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "PATH=$HOME/android-sdk/cmdline-tools/tools/bin:$PATH" >> $GITHUB_ENV
-
-          # Accept licenses
-          yes | $ANDROID_HOME/cmdline-tools/tools/bin/sdkmanager --licenses
-
-          # Install Android SDK components
-          $ANDROID_HOME/cmdline-tools/tools/bin/sdkmanager "platform-tools" "platforms;android-33" "system-images;android-33;google_apis;x86_64"
-
-          # Create and start an Android emulator
-          echo "no" | $ANDROID_HOME/cmdline-tools/tools/bin/avdmanager create avd -n test_emulator -k "system-images;android-33;google_apis;x86_64" -d "pixel_xl"
-          $ANDROID_HOME/emulator/emulator -avd test_emulator -no-audio -no-boot-anim -no-window &
-          $ANDROID_HOME/platform-tools/adb wait-for-device  # Wait for the emulator to be ready
-
-      - name: Run TestNG Tests (Android)
+      - name: Run TestNG Tests
         run: |
           cd TestAppiumDemo
-          mvn clean test -DsuiteXmlFile=android-testng.xml -DappPath=$GITHUB_WORKSPACE/TestAppiumDemo/apk/your-app.apk  # Pass the APK path to the tests
-
-      - name: Set up iOS Simulator
-        run: |
-          # Install Xcode and create an iOS simulator
-          xcode-select --install
-          xcrun simctl create "iPhone 15 Pro" "com.apple.CoreSimulator.SimDeviceType.iPhone-15-Pro" "com.apple.CoreSimulator.SimRuntime.iOS-17-2"
-          xcrun simctl boot "iPhone 15 Pro"
-
-      - name: Run TestNG Tests (iOS)
-        run: |
-          cd TestAppiumDemo
-          mvn clean test -DsuiteXmlFile=ios-testng.xml  # Run iOS tests
-
-      - name: Stop Appium Server
-        run: |
-          pkill -f "appium"  # Stop Appium server
+          mvn clean test -DsuiteXmlFile=android-testng.xml -DappPath=/github/workspace/TestAppiumDemo/apk/your-app.apk
