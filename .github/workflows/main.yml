@@ -30,6 +30,14 @@ jobs:
           appium driver install xcuitest  # For iOS
           # You might want to install dependencies using Maven/Gradle if needed for TestNG
 
+      - name: Set up Android Emulator
+        run: |
+          # Download and start the Android emulator
+          sdkmanager "system-images;android-29;google_apis;x86_64" # Install emulator system image
+          avdmanager create avd -n test -k "system-images;android-29;google_apis;x86_64" # Create emulator
+          nohup emulator -avd test -no-window -gpu off &  # Start emulator in background
+          sleep 60  # Wait for the emulator to start
+
       - name: Set up Appium server
         run: |
           appium &  # Start Appium server
@@ -37,12 +45,11 @@ jobs:
 
       - name: Run TestNG Tests (Android)
         run: |
-          # Change directory to where the pom.xml is located
-          cd TestAppiumDemo
+          # For Android
           mvn clean test -DsuiteXmlFile=android-testng.xml   # Use your TestNG suite file for Android tests
+          - appium:app=./apk/Android-MyDemoAppRN.1.3.0.build-244.apk
 
       - name: Run TestNG Tests (iOS)
         run: |
-          # Change directory to where the pom.xml is located
-          cd TestAppiumDemo
+          # For iOS
           mvn clean test -DsuiteXmlFile=ios-testng.xml  # Use your TestNG suite file for iOS tests
