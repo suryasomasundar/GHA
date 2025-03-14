@@ -12,63 +12,46 @@ jobs:
   test:
     runs-on: ubuntu-latest  # Use Ubuntu runner for simplicity
 
-    container:
-      image: budtmo/docker-android:emulator_11.0  # Use Android 11 emulator image
-      options: --privileged --user root -v /github/workspace:/github/workspace  # Mount the workspace directory
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Debug Workspace
-        run: |
-          ls -la /github/workspace
-
-      - name: Debug TestAppiumDemo Directory
-        run: |
-          ls -la /github/workspace/TestAppiumDemo
-
-      - name: Download APK File from GitHub Releases
-        run: |
-          mkdir -p /github/workspace/TestAppiumDemo/apk
-          wget -O /github/workspace/TestAppiumDemo/apk/Android-MyDemoAppRN.1.3.0.build-244.apk "https://github.com/suryasomasundar/GHA/releases/download/android-apk/Android-MyDemoAppRN.1.3.0.build-244.apk"
-
-      - name: Set Permissions
-        run: |
-          chmod -R 777 /github/workspace
-
-      - name: Set up Java
+      - name: Set up JDK
         uses: actions/setup-java@v2
         with:
           java-version: '8'  # Use Java 8 for compatibility
           distribution: 'temurin'
 
-      - name: Install Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'  # Use Node.js 18 (required for Appium)
 
       - name: Install Maven
         run: |
-          apt-get update
-          apt-get install -y maven
+          sudo apt-get update
+          sudo apt-get install -y maven
 
       - name: Verify Maven Installation
         run: |
           mvn -version
 
-      - name: Install Appium and Drivers
-        run: |
-          npm install -g appium
-          appium driver install uiautomator2  # For Android
-          appium driver install xcuitest  # For iOS
+      - name: Set up Android Emulator and Appium
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30  # Android API level (e.g., 30 for Android 11)
+          arch: x86_64  # Emulator architecture
+          profile: Nexus 6  # Emulator profile
+          script: |
+            # Install Appium and drivers
+            npm install -g appium
+            appium driver install uiautomator2  # For Android
+            appium driver install xcuitest  # For iOS
 
-      - name: Start Appium Server
-        run: |
-          appium &  # Start Appium server in the background
-          sleep 10  # Wait for 10 seconds to ensure the server is ready
+            # Start Appium server
+            appium &  # Start Appium server in the background
+            sleep 10  # Wait for 10 seconds to ensure the server is ready
 
-      - name: Run TestNG Tests
-        run: |
-          cd /github/workspace/TestAppiumDemo
-          mvn clean test -DsuiteXmlFile=android-testng.xml -DappPath=/github/workspace/TestAppiumDemo/apk/Android-MyDemoAppRN.1.3.0.build-244.apk
+            # Run TestNG tests
+            cd TestAppiumDemo
+            mvn clean test -DsuiteXmlFile=android-testng.xml -DappPath=/github/workspace/TestAppiumDemo/apk/Android-MyDemoAppRN.1.3.0.build-244.apk
