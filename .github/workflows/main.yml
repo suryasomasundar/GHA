@@ -41,11 +41,14 @@ jobs:
       - name: Set up Android SDK and Emulator
         run: |
           # Download and install Android Command Line Tools
-          mkdir -p $HOME/android-sdk
-          cd $HOME/android-sdk
+          mkdir -p $HOME/android-sdk/cmdline-tools
+          cd $HOME/android-sdk/cmdline-tools
           wget https://dl.google.com/android/repository/commandlinetools-mac-10406996_latest.zip
           unzip commandlinetools-mac-10406996_latest.zip
           rm commandlinetools-mac-10406996_latest.zip
+
+          # Move the tools directory to the correct location
+          mv cmdline-tools tools
 
           # Set environment variables
           echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
