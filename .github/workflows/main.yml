@@ -20,7 +20,16 @@ jobs:
       - name: Install Dependencies
         run: |
           apt-get update
-          apt-get install -y wget unzip maven nodejs npm
+          apt-get install -y wget unzip maven
+          
+          # Install Node.js and npm properly
+          curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+          apt-get install -y nodejs
+
+          # Verify installations
+          node -v
+          npm -v
+          mvn -version
 
       - name: Download and Extract Project
         run: |
