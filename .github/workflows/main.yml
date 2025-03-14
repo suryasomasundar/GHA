@@ -20,7 +20,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
-          path: TestAppiumDemo  # Check out the repository into a custom directory
+          submodules: true  # Enable submodules to check out nested directories
 
       - name: Debug Workspace
         run: |
