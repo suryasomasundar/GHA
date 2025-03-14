@@ -31,8 +31,8 @@ public class androidCheckoutTest {
         System.out.println("Appium driver started successfully.");
     }
 
-    @Test
-    public void testCheckoutFlow() throws InterruptedException {
+    @Test(groups = "android")
+    public void testCheckoutFlowAndroid() throws InterruptedException {
 
         // Step 1: Open app (already handled by setup)
         System.out.println("Testing  Started..");

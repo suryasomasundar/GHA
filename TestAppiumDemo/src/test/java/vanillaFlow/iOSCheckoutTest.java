@@ -38,8 +38,8 @@ public class iOSCheckoutTest {
         driver = new IOSDriver(url, capabilities);
     }
 
-    @Test
-    public void testLaunchApp() throws InterruptedException {
+    @Test(groups = "ios")
+    public void testLaunchAppiOS() throws InterruptedException {
         // Log the app launch confirmation
         System.out.println("Successfully Launched App on Simulator");
 

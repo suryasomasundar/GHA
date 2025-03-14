@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suite name="Mobile Test Suite">
+    <test name="Android Checkout Test">
+        <groups>
+            <run>
+                <include name="android"/>
+                <exclude name="ios"/> <!-- This ensures iOS tests don't run -->
+            </run>
+        </groups>
+        <classes>
+            <class name="vanillaFlow.androidCheckoutTest" />
+        </classes>
+    </test>
+</suite>
