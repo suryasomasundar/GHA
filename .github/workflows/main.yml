@@ -44,7 +44,7 @@ jobs:
 
       - name: Verify Project Structure
         run: |
-          if [[ ! -f "/github/workspace/TestAppiumDemo/pom.xml" ]]; then
+          if test ! -f "/github/workspace/TestAppiumDemo/pom.xml"; then
             echo "❌ pom.xml is missing! Exiting..."
             exit 1
           fi
