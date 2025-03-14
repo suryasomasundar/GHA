@@ -23,7 +23,11 @@ jobs:
           ls -R $HOME/android-sdk
 
           echo "Creating latest directory and linking SDK tools"
-          mkdir -p $HOME/android-sdk/cmdline-tools/latest
+          if [ ! -d "$HOME/android-sdk/cmdline-tools/latest" ]; then
+            mkdir -p $HOME/android-sdk/cmdline-tools/latest
+          fi
+
+          # Move existing tools to the 'latest' directory if not already there
           mv $HOME/android-sdk/cmdline-tools/* $HOME/android-sdk/cmdline-tools/latest/
 
           echo "Setting ANDROID_HOME and PATH"
