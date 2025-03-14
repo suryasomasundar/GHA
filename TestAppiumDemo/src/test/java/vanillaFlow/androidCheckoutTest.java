@@ -18,6 +18,7 @@ public class androidCheckoutTest {
     private AppiumDriver driver;
 
     @BeforeClass
+
     public void setUp() throws Exception {
         UiAutomator2Options options = new UiAutomator2Options();
         options.setPlatformName("Android");
