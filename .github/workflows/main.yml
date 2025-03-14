@@ -32,13 +32,13 @@ jobs:
 
       - name: Install Android SDK
         run: |
-          # Install Android SDK tools
+          # Install Android SDK tools to a writable directory
           curl -s https://dl.google.com/android/repository/commandlinetools-mac-8512546_latest.zip -o sdk-tools.zip
-          unzip sdk-tools.zip -d /usr/local/share/android-sdk
+          unzip sdk-tools.zip -d $HOME/android-sdk
           rm sdk-tools.zip
           
           # Set environment variables for Android SDK
-          export ANDROID_HOME=/usr/local/share/android-sdk
+          export ANDROID_HOME=$HOME/android-sdk
           export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator
 
           # Accept Android licenses and install required packages
