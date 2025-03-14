@@ -14,7 +14,7 @@ jobs:
 
     container:
       image: budtmo/docker-android:emulator_11.0  # Use Android 11 emulator image
-      options: --privileged --user root  # Run as root user
+      options: --privileged --user root -v /github/workspace:/github/workspace  # Mount the workspace directory
 
     steps:
       - name: Checkout repository
