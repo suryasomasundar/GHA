@@ -20,7 +20,6 @@ jobs:
         uses: actions/setup-java@v2
         with:
           java-version: '11'  # Use the Java version that works with your project
-          distribution: 'temurin'  # Use Eclipse Temurin distribution for JDK
 
       - name: Install Dependencies
         run: |
@@ -33,14 +32,16 @@ jobs:
       - name: Set up Appium server
         run: |
           appium &  # Start Appium server
-          while ! nc -z localhost 4723; do sleep 1; done  # Wait for Appium server to be ready
+          sleep 10  # Wait for Appium to start
 
       - name: Run TestNG Tests (Android)
         run: |
-          # For Android
+          # Change directory to where the pom.xml is located
+          cd TestAppiumDemo
           mvn clean test -DsuiteXmlFile=android-testng.xml   # Use your TestNG suite file for Android tests
 
       - name: Run TestNG Tests (iOS)
         run: |
-          # For iOS
+          # Change directory to where the pom.xml is located
+          cd TestAppiumDemo
           mvn clean test -DsuiteXmlFile=ios-testng.xml  # Use your TestNG suite file for iOS tests
