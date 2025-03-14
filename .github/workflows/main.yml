@@ -49,18 +49,18 @@ jobs:
 
           # Set environment variables
           echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "PATH=$HOME/android-sdk/cmdline-tools/bin:$PATH" >> $GITHUB_ENV
+          echo "PATH=$HOME/android-sdk/cmdline-tools/tools/bin:$PATH" >> $GITHUB_ENV
 
           # Accept licenses
-          yes | sdkmanager --licenses
+          yes | $ANDROID_HOME/cmdline-tools/tools/bin/sdkmanager --licenses
 
           # Install Android SDK components
-          sdkmanager "platform-tools" "platforms;android-34" "system-images;android-34;google_apis;x86_64"
+          $ANDROID_HOME/cmdline-tools/tools/bin/sdkmanager "platform-tools" "platforms;android-34" "system-images;android-34;google_apis;x86_64"
 
           # Create and start an Android emulator
-          echo "no" | avdmanager create avd -n test_emulator -k "system-images;android-34;google_apis;x86_64" -d "pixel_xl"
-          emulator -avd test_emulator -no-audio -no-boot-anim -no-window &
-          adb wait-for-device  # Wait for the emulator to be ready
+          echo "no" | $ANDROID_HOME/cmdline-tools/tools/bin/avdmanager create avd -n test_emulator -k "system-images;android-34;google_apis;x86_64" -d "pixel_xl"
+          $ANDROID_HOME/emulator/emulator -avd test_emulator -no-audio -no-boot-anim -no-window &
+          $ANDROID_HOME/platform-tools/adb wait-for-device  # Wait for the emulator to be ready
 
       - name: Run TestNG Tests (Android)
         run: |
