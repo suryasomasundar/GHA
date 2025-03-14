@@ -32,29 +32,37 @@ jobs:
 
       - name: Install Android SDK
         run: |
-          # Install Android SDK tools to a writable directory
+          echo "Downloading Android SDK Tools"
           curl -s https://dl.google.com/android/repository/commandlinetools-mac-8512546_latest.zip -o sdk-tools.zip
           unzip sdk-tools.zip -d $HOME/android-sdk
           rm sdk-tools.zip
-          
-          # Create a 'latest' symlink to ensure sdkmanager is found
+
+          echo "Checking SDK Directory Contents"
+          ls -R $HOME/android-sdk
+
+          echo "Creating latest directory and linking SDK tools"
           mkdir -p $HOME/android-sdk/cmdline-tools/latest
           mv $HOME/android-sdk/cmdline-tools/* $HOME/android-sdk/cmdline-tools/latest/
-          
-          # Set environment variables for Android SDK
+
+          echo "Setting ANDROID_HOME and PATH"
           export ANDROID_HOME=$HOME/android-sdk
           export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator
+          
+          echo "Verifying SDK Manager Path"
+          ls -l $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager
 
-          # Accept Android licenses and install required packages
+          echo "Accepting Android SDK licenses"
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+
+          echo "Installing Android Platform Tools"
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-29" "system-images;android-29;google_apis;x86_64"
 
       - name: Set up Android Emulator
         run: |
-          # Create Android Emulator
+          echo "Creating Android Emulator"
           echo no | avdmanager create avd -n test -k "system-images;android-29;google_apis;x86_64" --force
           
-          # Start the emulator
+          echo "Starting Android Emulator"
           nohup emulator -avd test -no-window -gpu off & 
           sleep 60  # Wait for the emulator to start
 
@@ -71,4 +79,4 @@ jobs:
       - name: Run TestNG Tests (iOS)
         run: |
           # Run the iOS tests
-          mvn clean test -DsuiteXmlFile=ios-testng.xml  # Use your T
+          mvn clean test -DsuiteXmlFile=ios-testng.xml  # Use your TestNG suite file for iOS tests
