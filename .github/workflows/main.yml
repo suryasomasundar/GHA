@@ -17,6 +17,11 @@ jobs:
       options: --privileged --user root -v /github/workspace:/github/workspace  # Mount the workspace directory
 
     steps:
+      - name: Install Git
+        run: |
+          apt-get update
+          apt-get install -y git
+
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
