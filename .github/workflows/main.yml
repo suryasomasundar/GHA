@@ -19,8 +19,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-        with:
-          path: TestAppiumDemo  # Check out the repository into a custom directory
+
+      - name: Download APK File from GitHub Releases
+        run: |
+          mkdir -p /github/workspace/TestAppiumDemo/apk
+          wget -O /github/workspace/TestAppiumDemo/apk/Android-MyDemoAppRN.1.3.0.build-244.apk "https://github.com/suryasomasundar/GHA/releases/download/android-apk/Android-MyDemoAppRN.1.3.0.build-244.apk"
 
       - name: Debug Workspace
         run: |
@@ -29,11 +32,6 @@ jobs:
       - name: Debug TestAppiumDemo Directory
         run: |
           ls -la /github/workspace/TestAppiumDemo
-
-      - name: Download APK File from GitHub Releases
-        run: |
-          mkdir -p /github/workspace/TestAppiumDemo/apk
-          wget -O /github/workspace/TestAppiumDemo/apk/Android-MyDemoAppRN.1.3.0.build-244.apk "https://github.com/suryasomasundar/GHA/releases/download/android-apk/Android-MyDemoAppRN.1.3.0.build-244.apk"
 
       - name: Set Permissions
         run: |
