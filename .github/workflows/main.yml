@@ -14,11 +14,15 @@ jobs:
 
     container:
       image: budtmo/docker-android:emulator_11.0  # Use Android 11 emulator image
-      options: --privileged  # Required for running the emulator
+      options: --privileged --user root  # Run as root user
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+
+      - name: Set Permissions
+        run: |
+          chmod -R 777 /github/workspace
 
       - name: Set up Java
         uses: actions/setup-java@v2
