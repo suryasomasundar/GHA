@@ -3,10 +3,10 @@ name: Run Vanilla TestNG Tests
 on:
   push:
     branches:
-      - master  # Trigger workflow on push to the main branch
+      - master  # Trigger workflow on push to the master branch
   pull_request:
     branches:
-      - master  # Trigger workflow on pull request to the main branch
+      - master  # Trigger workflow on pull request to the master branch
 
 jobs:
   test:
@@ -20,7 +20,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           java-version: '11'  # Use the Java version that works with your project
-          distribution: 'adoptopenjdk'  # Specify the JDK distribution
+          distribution: 'temurin'  # Use Eclipse Temurin distribution for JDK
 
       - name: Install Dependencies
         run: |
