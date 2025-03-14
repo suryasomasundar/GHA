@@ -1,0 +1,50 @@
+name: Android SDK Setup
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  setup-android-sdk:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install Android SDK
+        run: |
+          echo "Downloading Android SDK Tools"
+          curl -s https://dl.google.com/android/repository/commandlinetools-mac-8512546_latest.zip -o sdk-tools.zip
+          unzip sdk-tools.zip -d $HOME/android-sdk
+          rm sdk-tools.zip
+
+          echo "Checking SDK Directory Contents"
+          ls -R $HOME/android-sdk
+
+          echo "Creating latest directory and linking SDK tools"
+          if [ ! -d "$HOME/android-sdk/cmdline-tools/latest" ]; then
+            mkdir -p $HOME/android-sdk/cmdline-tools/latest
+          fi
+
+          # Move existing tools to the 'latest' directory if not already there
+          mv $HOME/android-sdk/cmdline-tools/* $HOME/android-sdk/cmdline-tools/latest/
+
+          echo "Setting ANDROID_HOME and PATH"
+          export ANDROID_HOME=$HOME/android-sdk
+          export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator
+
+          echo "Verifying SDK Manager Path"
+          ls -l $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager
+
+          echo "Accepting Android SDK licenses"
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+
+          echo "Installing Android Platform Tools"
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-29" "system-images;android-29;google_apis;x86_64"
+
+      - name: Verify Installation
+        run: |
+          echo "Verifying if the Android SDK is installed correctly"
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --list
+          $ANDROID_HOME/platform-tools/adb version
