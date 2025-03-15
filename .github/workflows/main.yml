@@ -49,6 +49,23 @@ jobs:
             exit 1
           fi
 
+      - name: Install Appium and Drivers
+        run: |
+          npm install -g appium
+          appium driver install uiautomator2  # Install UiAutomator2 for Android
+
+      - name: Start Android Emulator
+        run: |
+          echo "Starting Android Emulator..."
+          emulator -avd Pixel_3a_API_30_x86_64 -no-skin -no-audio -no-window &  # Start emulator
+          sleep 60  # Allow emulator to fully boot
+
+      - name: Start Appium Server
+        run: |
+          echo "Starting Appium Server..."
+          appium &  # Start Appium server in the background
+          sleep 10  # Allow Appium server to start
+
       - name: Run TestNG Tests
         working-directory: /github/workspace/gha/TestAppiumDemo
-        run: mvn clean test -DsuiteXmlFile=android-testng.xml
+        run: mvn clean test -DsuiteXmlFile=android-testng.xml -DappPath=/github/workspace/gha/TestAppiumDemo/apk/Android-MyDemoAppRN.1.3.0.build-244.apk
