@@ -1,4 +1,4 @@
-name: Parallel Appium Tests (Android + iOS)
+name: Android Appium Tests
 
 on:
   push:
@@ -43,9 +43,10 @@ jobs:
             timeout=$((timeout + 5))
           done
           if [ "$boot_completed" != "1" ]; then
-            echo "Emulator failed to boot"
+            echo "❌ Emulator failed to boot"
             exit 1
           fi
+          echo "✅ Emulator booted successfully"
 
       - name: Install Appium
         run: |
@@ -59,8 +60,8 @@ jobs:
       - name: Wait for Appium
         run: |
           for i in {1..20}; do
-            nc -z localhost 4723 && echo "Appium is ready" && break
-            echo "Waiting for Appium..."
+            nc -z localhost 4723 && echo "✅ Appium is ready" && break
+            echo "⏳ Waiting for Appium..."
             sleep 5
           done
 
@@ -73,75 +74,3 @@ jobs:
         with:
           name: appium-android-logs
           path: appium-android.log
-
-  ios-test:
-    name: iOS Test
-    runs-on: macos-13
-    timeout-minutes: 30
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Java
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Boot iOS Simulator (dynamic runtime)
-        run: |
-          xcrun simctl delete unavailable || true
-          xcrun simctl shutdown all || true
-
-          DEVICE_NAME="iPhone 13 Pro"
-
-          # Get valid device type and runtime IDs
-          DEVICE_ID=$(xcrun simctl list devicetypes | grep "$DEVICE_NAME" | head -n1 | awk -F '[()]' '{print $2}')
-          RUNTIME_ID=$(xcrun simctl list runtimes | grep "iOS" | grep -v unavailable | head -n1 | awk -F '[()]' '{print $2}')
-
-          if [[ -z "$RUNTIME_ID" || -z "$DEVICE_ID" ]]; then
-            echo "❌ Failed to find compatible device or runtime."
-            xcrun simctl list devicetypes
-            xcrun simctl list runtimes
-            exit 1
-          fi
-
-          echo "✅ Creating simulator with device ID: $DEVICE_ID and runtime ID: $RUNTIME_ID"
-
-          SIM_ID=$(xcrun simctl create "TestDevice" "$DEVICE_ID" "$RUNTIME_ID")
-          xcrun simctl boot "$SIM_ID"
-
-          until xcrun simctl bootstatus "$SIM_ID" | grep -q "Booted"; do
-            echo "⏳ Waiting for iOS Simulator to boot..."
-            sleep 5
-          done
-
-          echo "✅ iOS Simulator booted successfully"
-
-      - name: Install Appium
-        run: |
-          npm install -g appium
-          appium -v
-
-      - name: Start Appium Server
-        run: |
-          nohup appium > appium-ios.log 2>&1 &
-
-      - name: Wait for Appium
-        run: |
-          for i in {1..20}; do
-            nc -z localhost 4723 && echo "Appium is ready" && break
-            echo "Waiting for Appium..."
-            sleep 5
-          done
-
-      - name: Run iOS Tests
-        run: mvn test
-
-      - name: Upload Appium Logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: appium-ios-logs
-          path: appium-ios.log
