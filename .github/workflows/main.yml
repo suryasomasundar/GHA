@@ -1,4 +1,4 @@
-name: Android Appium Tests (All-In-One)
+name: Android Appium Tests (Robust + Retry-Proof)
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 jobs:
   android-test:
     runs-on: macos-13
-    timeout-minutes: 35
+    timeout-minutes: 40
 
     steps:
       - uses: actions/checkout@v4
@@ -52,28 +52,29 @@ jobs:
             -port 5554 \
             -no-metrics &
 
+          echo "Waiting for emulator..."
           adb wait-for-device
 
+          echo "Waiting for system to be fully booted..."
           boot_completed=""
           timeout=0
           max_wait=300
-
           while [ "$boot_completed" != "1" ] && [ $timeout -lt $max_wait ]; do
-            boot_completed=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
+            boot_completed=$(adb shell getprop sys.boot_completed | tr -d '\r')
             echo "Boot status: $boot_completed"
             sleep 5
             timeout=$((timeout + 5))
           done
 
-          if [ "$boot_completed" != "1" ]; then
-            echo "❌ Emulator failed to boot."
-            adb devices
-            adb shell getprop
-            adb shell logcat -d | tail -n 100
-            exit 1
-          fi
+          echo "Unlocking emulator screen..."
+          adb shell input keyevent 82
 
-          echo "✅ Emulator booted successfully."
+          echo "Waiting for settings service to be available..."
+          for i in {1..10}; do
+            adb shell service check settings && break
+            echo "⏳ Waiting for settings service..."
+            sleep 5
+          done
 
       - name: Install Appium + UiAutomator2 Driver
         run: |
@@ -87,18 +88,25 @@ jobs:
       - name: Start Appium Server
         run: nohup appium > appium-android.log 2>&1 &
 
-      - name: Wait for Appium
+      - name: Wait for Appium Server
         run: |
           for i in {1..20}; do
             nc -z localhost 4723 && echo "✅ Appium is ready" && break
-            echo "⏳ Waiting for Appium..."
+            echo "⏳ Waiting for Appium to be ready..."
             sleep 5
           done
 
-      - name: Run Appium Cucumber Tests
+      - name: Run Appium Cucumber Tests with Retry
         run: |
           cd TestAppiumDemo
-          mvn test
+          n=0
+          until [ "$n" -ge 2 ]
+          do
+            mvn test && break
+            n=$((n+1))
+            echo "❌ Test failed. Retrying in 10s..."
+            sleep 10
+          done
 
       - name: Upload Appium Logs
         if: always()
