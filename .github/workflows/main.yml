@@ -21,23 +21,33 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Accept Android Licenses
-        run: yes | sdkmanager --licenses
-
-      - name: Install Android SDK Components
+      - name: Install Android Command Line Tools
         run: |
+          mkdir -p $HOME/android-sdk/cmdline-tools
+          cd $HOME/android-sdk/cmdline-tools
+          curl -O https://dl.google.com/android/repository/commandlinetools-mac-9477386_latest.zip
+          unzip -q commandlinetools-mac-*.zip
+          mv cmdline-tools latest
+          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          echo "$HOME/android-sdk/emulator" >> $GITHUB_PATH
+          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
+
+      - name: Install Android SDK Packages
+        run: |
+          yes | sdkmanager --licenses
           sdkmanager "platform-tools" "platforms;android-34" "emulator" "system-images;android-34;google_apis;x86_64"
 
       - name: Create and Boot Android Emulator
         run: |
           echo "no" | avdmanager create avd -n test -k "system-images;android-34;google_apis;x86_64" --device "pixel_5" --force
-          $ANDROID_HOME/emulator/emulator -avd test -no-audio -no-window -gpu swiftshader_indirect -port 5554 &
+          $HOME/android-sdk/emulator/emulator -avd test -no-audio -no-window -gpu swiftshader_indirect -port 5554 &
           echo "Waiting for emulator to boot..."
-          adb wait-for-device
+          $HOME/android-sdk/platform-tools/adb wait-for-device
           boot_completed=""
           timeout=0
           while [ "$boot_completed" != "1" ] && [ $timeout -lt 60 ]; do
-            boot_completed=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
+            boot_completed=$($HOME/android-sdk/platform-tools/adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
             echo "Boot status: $boot_completed"
             sleep 5
             timeout=$((timeout + 5))
