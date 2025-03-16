@@ -1,4 +1,4 @@
-name: Android Appium Tests (Single Job - All In One)
+name: Android Appium Tests (All-In-One)
 
 on:
   push:
@@ -70,10 +70,14 @@ jobs:
 
           echo "✅ Emulator booted successfully."
 
-      - name: Install Appium
+      - name: Install Appium + UiAutomator2 Driver
         run: |
           npm install -g appium
+          appium driver install uiautomator2
           appium -v
+
+      - name: List Installed Appium Drivers (Debug)
+        run: appium driver list --installed
 
       - name: Start Appium Server
         run: nohup appium > appium-android.log 2>&1 &
@@ -86,7 +90,7 @@ jobs:
             sleep 5
           done
 
-      - name: Run Android Appium Cucumber Tests
+      - name: Run Appium Cucumber Tests
         run: |
           cd TestAppiumDemo
           mvn test
