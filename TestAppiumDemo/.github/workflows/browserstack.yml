@@ -2,7 +2,7 @@ name: Run Appium Test on BrowserStack
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
   workflow_dispatch:
 
 jobs:
