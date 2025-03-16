@@ -1,4 +1,4 @@
-name: Android Appium Tests (Android 30 - google_apis;x86)
+name: Android Appium Tests (Cucumber)
 
 on:
   push:
@@ -38,7 +38,7 @@ jobs:
           yes | sdkmanager --licenses
           sdkmanager "platform-tools" "platforms;android-30" "emulator" "system-images;android-30;google_apis;x86"
 
-      - name: Create and Boot Android Emulator (API 30 - google_apis;x86)
+      - name: Create and Boot Android Emulator (API 30)
         run: |
           echo "no" | avdmanager create avd -n test -k "system-images;android-30;google_apis;x86" --device "pixel" --force
 
@@ -57,7 +57,7 @@ jobs:
 
           boot_completed=""
           timeout=0
-          max_wait=180
+          max_wait=300
 
           while [ "$boot_completed" != "1" ] && [ $timeout -lt $max_wait ]; do
             boot_completed=$($HOME/android-sdk/platform-tools/adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
@@ -98,8 +98,18 @@ jobs:
             sleep 5
           done
 
-      - name: Run Android Tests
-        run: mvn test
+      - name: Verify Maven Project Structure
+        run: |
+          echo "📍 Current directory: $PWD"
+          echo "📦 Root contents:"
+          ls -l
+          echo "📦 TestAppiumDemo contents:"
+          ls -l TestAppiumDemo
+
+      - name: Run Android Cucumber Tests
+        run: |
+          cd TestAppiumDemo
+          mvn test
 
       - name: Upload Appium Logs
         if: always()
