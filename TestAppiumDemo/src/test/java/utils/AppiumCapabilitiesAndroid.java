@@ -22,11 +22,13 @@ public class AppiumCapabilitiesAndroid {
         capabilities.setCapability("ignoreHiddenApiPolicyError", true);
         capabilities.setCapability("uiautomator2ServerInstallTimeout", 60000);
         capabilities.setCapability("disableWindowAnimation", true);
-        capabilities.setCapability("adbExecTimeout", 60000); // wait longer for adb commands
-        capabilities.setCapability("newCommandTimeout", 300); // keep session alive for longer
-        capabilities.setCapability("showChromedriverLog", true);         // if WebView testing
-        capabilities.setCapability("autoGrantPermissions", true);        // avoid manual permission popups
+        capabilities.setCapability("adbExecTimeout", 60000);
+        capabilities.setCapability("newCommandTimeout", 300);
+        capabilities.setCapability("showChromedriverLog", true);
+        capabilities.setCapability("autoGrantPermissions", true);
+        capabilities.setCapability("androidInstallTimeout", 180000); // ✅ NEW!
 
+        capabilities.setCapability("skipDeviceInitialization", true);
 
 
         
