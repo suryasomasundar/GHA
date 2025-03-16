@@ -8,7 +8,7 @@ on:
 jobs:
   android-test:
     name: Android Test
-    runs-on: ubuntu-latest
+    runs-on: macos-13
     timeout-minutes: 30
 
     steps:
@@ -21,24 +21,14 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install Android Command Line Tools
-        run: |
-          mkdir -p $HOME/android-sdk/cmdline-tools
-          cd $HOME/android-sdk/cmdline-tools
-          curl -O https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-          unzip -q commandlinetools-linux-*.zip
-          mv cmdline-tools latest
-          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
-          echo "$HOME/android-sdk/emulator" >> $GITHUB_PATH
+      - name: Accept Android Licenses
+        run: yes | sdkmanager --licenses
 
-      - name: Install SDK Packages
+      - name: Install Android SDK Components
         run: |
-          yes | sdkmanager --licenses
           sdkmanager "platform-tools" "platforms;android-34" "emulator" "system-images;android-34;google_apis;x86_64"
 
-      - name: Create and Boot Emulator
+      - name: Create and Boot Android Emulator
         run: |
           echo "no" | avdmanager create avd -n test -k "system-images;android-34;google_apis;x86_64" --device "pixel_5" --force
           $ANDROID_HOME/emulator/emulator -avd test -no-audio -no-window -gpu swiftshader_indirect -port 5554 &
@@ -99,26 +89,35 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Boot iOS Simulator (iPhone 13 - iOS 16.4)
+      - name: Boot iOS Simulator (dynamic runtime)
         run: |
           xcrun simctl delete unavailable || true
           xcrun simctl shutdown all || true
 
-          DEVICE_NAME="iPhone 13"
-          RUNTIME_NAME="iOS 16.4"
+          DEVICE_NAME="iPhone 13 Pro"
 
+          # Get valid device type and runtime IDs
           DEVICE_ID=$(xcrun simctl list devicetypes | grep "$DEVICE_NAME" | head -n1 | awk -F '[()]' '{print $2}')
-          RUNTIME_ID=$(xcrun simctl list runtimes | grep "$RUNTIME_NAME" | grep -v unavailable | head -n1 | awk -F '[()]' '{print $2}')
+          RUNTIME_ID=$(xcrun simctl list runtimes | grep "iOS" | grep -v unavailable | head -n1 | awk -F '[()]' '{print $2}')
 
-          echo "Creating simulator with device ID: $DEVICE_ID and runtime ID: $RUNTIME_ID"
+          if [[ -z "$RUNTIME_ID" || -z "$DEVICE_ID" ]]; then
+            echo "❌ Failed to find compatible device or runtime."
+            xcrun simctl list devicetypes
+            xcrun simctl list runtimes
+            exit 1
+          fi
+
+          echo "✅ Creating simulator with device ID: $DEVICE_ID and runtime ID: $RUNTIME_ID"
 
           SIM_ID=$(xcrun simctl create "TestDevice" "$DEVICE_ID" "$RUNTIME_ID")
           xcrun simctl boot "$SIM_ID"
 
           until xcrun simctl bootstatus "$SIM_ID" | grep -q "Booted"; do
-            echo "Waiting for iOS Simulator to boot..."
+            echo "⏳ Waiting for iOS Simulator to boot..."
             sleep 5
           done
+
+          echo "✅ iOS Simulator booted successfully"
 
       - name: Install Appium
         run: |
