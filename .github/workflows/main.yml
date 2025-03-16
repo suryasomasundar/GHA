@@ -1,4 +1,4 @@
-name: Android Appium Tests (AVD Cached in Same Workflow)
+name: Android Appium Tests with Cached AVD (Single Workflow)
 
 on:
   push:
@@ -10,9 +10,6 @@ jobs:
     name: Build AVD
     runs-on: macos-13
     timeout-minutes: 20
-
-    outputs:
-      avd-path: ${{ steps.set-path.outputs.avd-path }}
 
     steps:
       - uses: actions/checkout@v4
@@ -35,11 +32,13 @@ jobs:
           echo "$HOME/android-sdk/emulator" >> $GITHUB_PATH
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
 
-      - name: Install Android SDK + Create AVD
+      - name: Install SDK & Create Emulator
         run: |
           yes | sdkmanager --licenses
           sdkmanager "platform-tools" "platforms;android-30" "emulator" "system-images;android-30;google_apis;x86"
           echo "no" | avdmanager create avd -n test -k "system-images;android-30;google_apis;x86" --device "pixel"
+
+          # Boot once to generate full snapshot files
           nohup $HOME/android-sdk/emulator/emulator -avd test -no-window -gpu swiftshader_indirect &
           adb wait-for-device
           sleep 60
@@ -50,7 +49,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: android-avd
-          path: ~/.android
+          path: /Users/runner/.android  # ✅ FIXED PATH
 
   run-tests:
     name: Run Appium Tests
@@ -87,7 +86,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: android-avd
-          path: ~/.android
+          path: /Users/runner/.android  # ✅ FIXED PATH
 
       - name: Boot Cached Emulator
         run: |
