@@ -9,7 +9,7 @@ jobs:
   android-test:
     name: Android Test
     runs-on: macos-13
-    timeout-minutes: 30
+    timeout-minutes: 35
 
     steps:
       - name: Checkout code
@@ -41,21 +41,37 @@ jobs:
       - name: Create and Boot Android Emulator
         run: |
           echo "no" | avdmanager create avd -n test -k "system-images;android-34;google_apis;x86_64" --device "pixel_5" --force
-          $HOME/android-sdk/emulator/emulator -avd test -no-audio -no-window -gpu swiftshader_indirect -port 5554 &
+
+          $HOME/android-sdk/emulator/emulator \
+            -avd test \
+            -no-snapshot \
+            -no-window \
+            -no-audio \
+            -no-boot-anim \
+            -gpu swiftshader_indirect \
+            -port 5554 \
+            -no-metrics &
+
           echo "Waiting for emulator to boot..."
           $HOME/android-sdk/platform-tools/adb wait-for-device
+
           boot_completed=""
           timeout=0
-          while [ "$boot_completed" != "1" ] && [ $timeout -lt 60 ]; do
+          while [ "$boot_completed" != "1" ] && [ $timeout -lt 180 ]; do
             boot_completed=$($HOME/android-sdk/platform-tools/adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
             echo "Boot status: $boot_completed"
             sleep 5
             timeout=$((timeout + 5))
           done
+
           if [ "$boot_completed" != "1" ]; then
-            echo "❌ Emulator failed to boot"
+            echo "❌ Emulator failed to boot. Dumping emulator state..."
+            $HOME/android-sdk/platform-tools/adb devices
+            $HOME/android-sdk/platform-tools/adb shell getprop
+            $HOME/android-sdk/platform-tools/adb shell logcat -d | tail -n 100
             exit 1
           fi
+
           echo "✅ Emulator booted successfully"
 
       - name: Install Appium
