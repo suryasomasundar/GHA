@@ -17,6 +17,10 @@ public class AppiumCapabilitiesAndroid {
         capabilities.setCapability("deviceName", ConfigReader.getProperty("android.deviceName"));
         capabilities.setCapability("automationName", ConfigReader.getProperty("android.automationName"));
         capabilities.setCapability("app", appPath);
+
+        // ✅ Prevent hidden API adb shell failure
+        capabilities.setCapability("ignoreHiddenApiPolicyError", true);
+        
         return capabilities;
     }
 }
