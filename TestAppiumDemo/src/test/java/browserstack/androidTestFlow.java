@@ -2,15 +2,16 @@ package browserstack;
 
 import io.appium.java_client.AppiumDriver;
 import io.appium.java_client.android.AndroidDriver;
-import io.appium.java_client.android.options.UiAutomator2Options;
-import io.appium.java_client.ios.IOSDriver;
 import org.openqa.selenium.By;
 import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.WebElement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import utils.BSConfigHelper;
 
 import java.net.URL;
 
@@ -25,78 +26,70 @@ import java.net.URL;
 public class androidTestFlow {
 
     private AppiumDriver driver;
+    private static final Logger log = LoggerFactory.getLogger(androidTestFlow.class);
+
 
     @BeforeClass
     public void setUp() throws Exception {
-        String username = System.getProperty("BROWSERSTACK_USERNAME", System.getenv("BROWSERSTACK_USERNAME"));
-        String accessKey = System.getProperty("BROWSERSTACK_ACCESS_KEY", System.getenv("BROWSERSTACK_ACCESS_KEY"));
 
-        System.out.println("USERNAME: '" + username + "'");
-        System.out.println("ACCESS KEY: '" + accessKey + "'");
-
-        if (username == null || username.trim().isEmpty() ||
-                accessKey == null || accessKey.trim().isEmpty()) {
-            throw new IllegalArgumentException("Please set BROWSERSTACK_USERNAME and BROWSERSTACK_ACCESS_KEY.");
-        }
+        log.info("🔐 Setting up BrowserStack credentials...");
+        String username = BSConfigHelper.getUsername();
+        String accessKey = BSConfigHelper.getAccessKey();
+        BSConfigHelper.validateCreds(username, accessKey);
 
         MutableCapabilities caps = new MutableCapabilities();
-
-        // ✅ Android-specific setup
         caps.setCapability("platformName", "Android");
         caps.setCapability("device", "Google Pixel 6");
         caps.setCapability("os_version", "12.0");
         caps.setCapability("deviceName", "Google Pixel 6");
         caps.setCapability("automationName", "UiAutomator2");
-
-        // ✅ Use your uploaded .apk app
         caps.setCapability("app", "bs://e9e7e19a0331e9920b162afc2f06b8844c71e8b3");
-
-        // ✅ BrowserStack config
         caps.setCapability("browserstack.user", username);
         caps.setCapability("browserstack.key", accessKey);
-        caps.setCapability("browserstack.local", "false");
-
         caps.setCapability("project", "Android E2E");
-        caps.setCapability("build", "Checkout Flow Test");
-        caps.setCapability("name", "BS Android Test Flow");
-
+        caps.setCapability("build", "Android Checkout Flow");
+        caps.setCapability("name", "BS Android Test");
         caps.setCapability("browserstack.debug", "true");
         caps.setCapability("browserstack.networkLogs", "true");
 
-        // ✅ Start AndroidDriver, not IOSDriver
-        String bsUrl = "http://" + username + ":" + accessKey + "@hub.browserstack.com/wd/hub";
-        driver = new AndroidDriver(new URL(bsUrl), caps);
-
-        System.out.println("Android Appium session started successfully.");
+        log.info("🚀 Launching Appium driver on BrowserStack...");
+        driver = new AndroidDriver(new URL(BSConfigHelper.getHubUrl(username, accessKey)), caps);
+        log.info("✅ Appium session started.");
     }
 
     @Test
     public void testCheckoutFlow() throws InterruptedException {
+        log.info("🧪 Starting test: testCheckoutFlow");
         System.out.println("Testing Started..");
-        Thread.sleep(5000);
 
-        Thread.sleep(9000);
-        
+        Thread.sleep(1000);
+
+        log.info("➡️ Selecting first product...");
         WebElement firstProduct = driver.findElement(By.xpath("//android.widget.TextView[@text='Sauce Labs Backpack']"));
         firstProduct.click();
         Thread.sleep(1000);
 
+        log.info("➕ Increasing quantity...");
         WebElement quantityIncreaseButton = driver.findElement(By.xpath("//android.view.ViewGroup[@content-desc='counter plus button']"));
         quantityIncreaseButton.click();
         Thread.sleep(1000);
 
+        log.info("🛒 Adding product to cart...");
         WebElement addToCartButton = driver.findElement(By.xpath("//android.widget.TextView[@text='Add To Cart']"));
         addToCartButton.click();
         Thread.sleep(2000);
 
+        log.info("🧺 Opening cart...");
         WebElement cartIcon = driver.findElement(By.xpath("//android.view.ViewGroup[@content-desc='cart badge']"));
         cartIcon.click();
         Thread.sleep(2000);
 
+        log.info("➡️ Proceeding to checkout...");
         WebElement proceedCheckout = driver.findElement(By.xpath("//android.view.ViewGroup[@content-desc='Proceed To Checkout button']"));
         proceedCheckout.click();
         Thread.sleep(2000);
 
+        log.info("🔐 Entering login details...");
         WebElement emailField = driver.findElement(By.xpath("//android.widget.EditText[@content-desc= 'Username input field']"));
         WebElement passwordField = driver.findElement(By.xpath("//android.widget.EditText[@content-desc='Password input field']"));
         WebElement confirmLoginButton = driver.findElement(By.xpath("(//android.widget.TextView[@text='Login'])[2]"));
@@ -106,6 +99,7 @@ public class androidTestFlow {
         confirmLoginButton.click();
         Thread.sleep(2000);
 
+        log.info("🏠 Filling address details...");
         WebElement fullNameField = driver.findElement(By.xpath("//android.widget.EditText[@content-desc='Full Name* input field']"));
         WebElement addressLine1Field = driver.findElement(By.xpath("//android.widget.EditText[@content-desc='Address Line 1* input field']"));
         WebElement cityField = driver.findElement(By.xpath("//android.widget.EditText[@content-desc='City* input field']"));
@@ -121,6 +115,7 @@ public class androidTestFlow {
         paymentButton.click();
         Thread.sleep(2000);
 
+        log.info("✅ Verifying payment screen...");
         WebElement paymentMethodText = driver.findElement(By.xpath("//android.widget.TextView[@text='Enter a payment method']"));
         WebElement reviewOrderButton = driver.findElement(By.xpath("//android.widget.TextView[@text='Review Order']"));
 
@@ -128,12 +123,15 @@ public class androidTestFlow {
         Assert.assertTrue(reviewOrderButton.isDisplayed(), "Review order button is not shown!");
 
         Thread.sleep(2000);
+        log.info("✅ Test passed: Checkout flow completed successfully.");
     }
 
     @AfterClass
     public void tearDown() {
+        log.info("🛑 Tearing down Appium session...");
         if (driver != null) {
             driver.quit();
+            log.info("✅ Driver quit successfully.");
         }
     }
 }
