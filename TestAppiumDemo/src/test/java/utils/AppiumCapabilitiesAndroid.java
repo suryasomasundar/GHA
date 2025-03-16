@@ -20,7 +20,7 @@ public class AppiumCapabilitiesAndroid {
 
         // ✅ Prevent hidden API adb shell failure
         capabilities.setCapability("ignoreHiddenApiPolicyError", true);
-        capabilities.setCapability("uiautomator2ServerInstallTimeout", 60000);
+        capabilities.setCapability("uiautomator2ServerInstallTimeout", 180000);
         capabilities.setCapability("disableWindowAnimation", true);
         capabilities.setCapability("adbExecTimeout", 60000);
         capabilities.setCapability("newCommandTimeout", 300);
