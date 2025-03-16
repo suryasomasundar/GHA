@@ -20,6 +20,15 @@ public class AppiumCapabilitiesAndroid {
 
         // ✅ Prevent hidden API adb shell failure
         capabilities.setCapability("ignoreHiddenApiPolicyError", true);
+        capabilities.setCapability("uiautomator2ServerInstallTimeout", 60000);
+        capabilities.setCapability("disableWindowAnimation", true);
+        capabilities.setCapability("adbExecTimeout", 60000); // wait longer for adb commands
+        capabilities.setCapability("newCommandTimeout", 300); // keep session alive for longer
+        capabilities.setCapability("showChromedriverLog", true);         // if WebView testing
+        capabilities.setCapability("autoGrantPermissions", true);        // avoid manual permission popups
+
+
+
         
         return capabilities;
     }
