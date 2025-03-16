@@ -1,4 +1,4 @@
-name: Android Appium Tests
+name: Android Appium Tests (Fast Boot - Android 30)
 
 on:
   push:
@@ -36,11 +36,11 @@ jobs:
       - name: Install Android SDK Packages
         run: |
           yes | sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-34" "emulator" "system-images;android-34;google_apis;x86_64"
+          sdkmanager "platform-tools" "platforms;android-30" "emulator" "system-images;android-30;default;x86"
 
-      - name: Create and Boot Android Emulator
+      - name: Create and Boot Android Emulator (API 30 - x86)
         run: |
-          echo "no" | avdmanager create avd -n test -k "system-images;android-34;google_apis;x86_64" --device "pixel_5" --force
+          echo "no" | avdmanager create avd -n test -k "system-images;android-30;default;x86" --device "pixel" --force
 
           $HOME/android-sdk/emulator/emulator \
             -avd test \
@@ -57,9 +57,18 @@ jobs:
 
           boot_completed=""
           timeout=0
-          while [ "$boot_completed" != "1" ] && [ $timeout -lt 180 ]; do
+          max_wait=180
+
+          while [ "$boot_completed" != "1" ] && [ $timeout -lt $max_wait ]; do
             boot_completed=$($HOME/android-sdk/platform-tools/adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
-            echo "Boot status: $boot_completed"
+            if [ "$boot_completed" == "1" ]; then
+              echo "✅ Emulator is booted!"
+              break
+            fi
+
+            wakefulness=$($HOME/android-sdk/platform-tools/adb shell dumpsys power | grep 'mWakefulness=' || true)
+            echo "Boot status: $boot_completed | Wakefulness: $wakefulness"
+
             sleep 5
             timeout=$((timeout + 5))
           done
@@ -71,8 +80,6 @@ jobs:
             $HOME/android-sdk/platform-tools/adb shell logcat -d | tail -n 100
             exit 1
           fi
-
-          echo "✅ Emulator booted successfully"
 
       - name: Install Appium
         run: |
