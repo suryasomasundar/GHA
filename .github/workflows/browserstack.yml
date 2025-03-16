@@ -1,20 +1,24 @@
-name: Run Android Test on BrowserStack
+name: Run Appium Tests on BrowserStack
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
   workflow_dispatch:
 
 jobs:
-  run-android-test:
+  run-tests:
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        shell: bash
+    strategy:
+      matrix:
+        platform: [android, ios]
+
+    env:
+      BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+      BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
 
     steps:
-    - name: 🔄 Checkout code
+    - name: 🔄 Checkout source code
       uses: actions/checkout@v3
 
     - name: ☕ Set up Java 17
@@ -31,13 +35,20 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-maven-
 
-    - name: 🤖 Run Android Test on BrowserStack
+    - name: 🧪 Run Appium ${{ matrix.platform }} Test on BrowserStack
       working-directory: ./TestAppiumDemo
-      env:
-        BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
-        BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
       run: |
-        echo "Running Android Test on BrowserStack..."
-        mvn -Dtest=browserstack.androidTestFlow \
-            -DBROWSERSTACK_USERNAME=$BROWSERSTACK_USERNAME \
-            -DBROWSERSTACK_ACCESS_KEY=$BROWSERSTACK_ACCESS_KEY test
+        echo "✅ Starting Appium test for ${{ matrix.platform }}..."
+
+        if [ "${{ matrix.platform }}" = "android" ]; then
+          mvn -Dtest=browserstack.androidTestFlow \
+              -DBROWSERSTACK_USERNAME=$BROWSERSTACK_USERNAME \
+              -DBROWSERSTACK_ACCESS_KEY=$BROWSERSTACK_ACCESS_KEY test
+        elif [ "${{ matrix.platform }}" = "ios" ]; then
+          mvn -Dtest=browserstack.iOSTestFlow \
+              -DBROWSERSTACK_USERNAME=$BROWSERSTACK_USERNAME \
+              -DBROWSERSTACK_ACCESS_KEY=$BROWSERSTACK_ACCESS_KEY test
+        fi
+
+        echo "### ✅ Appium test completed for: ${{ matrix.platform }}" >> $GITHUB_STEP_SUMMARY
+        echo "🔗 [View BrowserStack Results](https://app-automate.browserstack.com/dashboard/v2/builds)" >> $GITHUB_STEP_SUMMARY
