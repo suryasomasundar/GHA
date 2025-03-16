@@ -30,10 +30,15 @@ jobs:
           echo "$HOME/android-sdk/emulator" >> $GITHUB_PATH
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
 
-      - name: Install SDK + Create Emulator
+      - name: Install SDK + Build Tools + Create Emulator
         run: |
           yes | sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-30" "emulator" "system-images;android-30;google_apis;x86"
+          sdkmanager \
+            "platform-tools" \
+            "build-tools;30.0.3" \
+            "platforms;android-30" \
+            "emulator" \
+            "system-images;android-30;google_apis;x86"
           echo "no" | avdmanager create avd -n test -k "system-images;android-30;google_apis;x86" --device "pixel"
 
       - name: Boot Emulator
