@@ -3,7 +3,7 @@ name: Run Appium Tests (Android & iOS - Java)
 on:
   push:
     branches:
-      - main
+      - master
   pull_request:
 
 jobs:
