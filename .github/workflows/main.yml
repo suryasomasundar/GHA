@@ -1,4 +1,4 @@
-name: Android Appium Tests (Cucumber)
+name: Android Appium Tests (Cached AVD Reliable)
 
 on:
   push:
@@ -7,16 +7,13 @@ on:
 
 jobs:
   android-test:
-    name: Android Test
     runs-on: macos-13
-    timeout-minutes: 35
+    timeout-minutes: 30
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Java
-        uses: actions/setup-java@v3
+      - uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -33,15 +30,19 @@ jobs:
           echo "$HOME/android-sdk/emulator" >> $GITHUB_PATH
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
 
-      - name: Install Android SDK Packages
+      - name: Install SDK minimal components
         run: |
           yes | sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-30" "emulator" "system-images;android-30;google_apis;x86"
+          sdkmanager "platform-tools" "platforms;android-30" "emulator"
 
-      - name: Create and Boot Android Emulator (API 30)
+      - name: Download Cached AVD Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: android-avd
+          path: ~/.android
+
+      - name: Boot Cached Android Emulator (with Extended Timeout)
         run: |
-          echo "no" | avdmanager create avd -n test -k "system-images;android-30;google_apis;x86" --device "pixel" --force
-
           $HOME/android-sdk/emulator/emulator \
             -avd test \
             -no-snapshot \
@@ -52,34 +53,28 @@ jobs:
             -port 5554 \
             -no-metrics &
 
-          echo "Waiting for emulator to boot..."
-          $HOME/android-sdk/platform-tools/adb wait-for-device
+          adb wait-for-device
 
           boot_completed=""
           timeout=0
-          max_wait=300
+          max_wait=300  # Extended to 5 minutes for reliability
 
           while [ "$boot_completed" != "1" ] && [ $timeout -lt $max_wait ]; do
-            boot_completed=$($HOME/android-sdk/platform-tools/adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
-            if [ "$boot_completed" == "1" ]; then
-              echo "✅ Emulator is booted!"
-              break
-            fi
-
-            wakefulness=$($HOME/android-sdk/platform-tools/adb shell dumpsys power | grep 'mWakefulness=' || true)
-            echo "Boot status: $boot_completed | Wakefulness: $wakefulness"
-
+            boot_completed=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
+            echo "Boot status: $boot_completed"
             sleep 5
             timeout=$((timeout + 5))
           done
 
           if [ "$boot_completed" != "1" ]; then
-            echo "❌ Emulator failed to boot. Dumping emulator state..."
-            $HOME/android-sdk/platform-tools/adb devices
-            $HOME/android-sdk/platform-tools/adb shell getprop
-            $HOME/android-sdk/platform-tools/adb shell logcat -d | tail -n 100
+            echo "❌ Emulator failed to boot. Detailed debug info:"
+            adb devices
+            adb shell getprop
+            adb shell logcat -d | tail -n 150
             exit 1
           fi
+
+          echo "✅ Emulator booted successfully."
 
       - name: Install Appium
         run: |
@@ -87,23 +82,19 @@ jobs:
           appium -v
 
       - name: Start Appium Server
-        run: |
-          nohup appium > appium-android.log 2>&1 &
+        run: nohup appium > appium-android.log 2>&1 &
 
       - name: Wait for Appium
         run: |
           for i in {1..20}; do
-            nc -z localhost 4723 && echo "✅ Appium is ready" && break
+            nc -z localhost 4723 && echo "✅ Appium ready" && break
             echo "⏳ Waiting for Appium..."
             sleep 5
           done
 
-      - name: Verify Maven Project Structure
+      - name: Verify Directory Structure
         run: |
-          echo "📍 Current directory: $PWD"
-          echo "📦 Root contents:"
           ls -l
-          echo "📦 TestAppiumDemo contents:"
           ls -l TestAppiumDemo
 
       - name: Run Android Cucumber Tests
