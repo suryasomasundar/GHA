@@ -1,4 +1,4 @@
-name: Build and Cache Android Emulator AVD (One-time)
+name: Build and Cache Android Emulator AVD (One-time, Corrected)
 
 on:
   workflow_dispatch:
@@ -34,14 +34,19 @@ jobs:
           yes | sdkmanager --licenses
           sdkmanager "platform-tools" "platforms;android-30" "emulator" "system-images;android-30;google_apis;x86"
           echo "no" | avdmanager create avd -n test -k "system-images;android-30;google_apis;x86" --device "pixel"
+          # Start emulator once to generate snapshot files
+          nohup $HOME/android-sdk/emulator/emulator -avd test -no-window -gpu swiftshader_indirect &
+          adb wait-for-device
+          sleep 60  # Wait a bit to fully boot emulator, adjust as needed
+          adb shell getprop sys.boot_completed
+          adb emu kill
 
-      - name: Archive AVD for Cache
+      - name: Archive Full AVD Directory
         run: |
           mkdir -p avd-backup
-          cp -r ~/.android/avd avd-backup/
-          cp ~/.android/*.ini avd-backup/ || true
+          cp -r ~/.android/* avd-backup/
 
-      - name: Upload AVD Artifact
+      - name: Upload Full AVD Artifact
         uses: actions/upload-artifact@v4
         with:
           name: android-avd
