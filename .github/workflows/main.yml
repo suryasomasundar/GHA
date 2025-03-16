@@ -2,8 +2,7 @@ name: Run Appium Tests (Android & iOS - Java)
 
 on:
   push:
-    branches:
-      - master
+    branches: [master]
   pull_request:
 
 jobs:
@@ -22,21 +21,35 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Set up Maven
-        run: mvn -version
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
 
-      # -------- ANDROID SETUP --------
-      - name: Start Android Emulator (Port 5554)
-        uses: reactivecircus/android-emulator-runner@v2.30.1
-        with:
-          api-level: 34
-          target: google_apis
-          arch: x86_64
-          profile: pixel_5
-          emulator-options: "-no-audio -no-window -gpu swiftshader_indirect -port 5554"
-          script: echo "Android Emulator ready on 5554"
+      - name: Accept Licenses
+        run: yes | sdkmanager --licenses
 
-      # -------- iOS SETUP --------
+      - name: Create and Boot Emulator Manually (port 5554)
+        run: |
+          echo "y" | sdkmanager "system-images;android-34;google_apis;x86_64"
+          echo "no" | avdmanager create avd -n test -k "system-images;android-34;google_apis;x86_64" --device "pixel_5" --force
+          
+          $ANDROID_HOME/emulator/emulator -avd test -no-audio -no-window -gpu swiftshader_indirect -port 5554 &
+          
+          # Wait for emulator to boot
+          echo "Waiting for emulator to boot..."
+          adb wait-for-device
+          boot_completed=""
+          timeout=0
+          while [ "$boot_completed" != "1" ] && [ $timeout -lt 60 ]; do
+            boot_completed=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
+            echo "Boot status: $boot_completed"
+            sleep 5
+            timeout=$((timeout + 5))
+          done
+          if [ "$boot_completed" != "1" ]; then
+            echo "Emulator failed to boot in time"
+            exit 1
+          fi
+
       - name: Setup iOS Simulator (iOS 18.3 - iPhone 16)
         run: |
           xcrun simctl delete unavailable || true
