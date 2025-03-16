@@ -1,9 +1,10 @@
-package vanillaFlow;
+package browserstack;
 
 import io.appium.java_client.AppiumDriver;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.android.options.UiAutomator2Options;
 import org.openqa.selenium.By;
+import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.WebElement;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -13,64 +14,67 @@ import org.testng.annotations.Test;
 import java.net.URL;
 
 /**
- * Plain Vanilla E2E test flow for android  and it's working ;-)
+ * Plain Vanilla E2E test flow for Android and it's working ;-)
+ * Updated to use environment variables for BrowserStack credentials.
  *
  * @author Somu
  * @since 14 Mar, 2025
  */
 
-
-public class androidDemoTest {
+public class androidTestFlow {
 
     private AppiumDriver driver;
 
     @BeforeClass
     public void setUp() throws Exception {
-        UiAutomator2Options options = new UiAutomator2Options();
+        String username = System.getProperty("BROWSERSTACK_USERNAME", System.getenv("BROWSERSTACK_USERNAME"));
+        String accessKey = System.getProperty("BROWSERSTACK_ACCESS_KEY", System.getenv("BROWSERSTACK_ACCESS_KEY"));
 
-        options.setDeviceName("Google Pixel 7"); // Use a real device name from BS
-        options.setPlatformVersion("13.0");       // Optional but recommended for consistency
-        //options.setApp("/Users/somu/Downloads/Android-MyDemoAppRN.1.3.0.build-244.apk");
-        options.setApp("bs://e9e7e19a0331e9920b162afc2f06b8844c71e8b3");  // Replace with the actual app_url
-        options.setAutomationName("UiAutomator2");
+        System.out.println("USERNAME: '" + username + "'");
+        System.out.println("ACCESS KEY: '" + accessKey + "'");
 
-        options.setCapability("browserstack.user", "somusurya_3yWHf1");
-        options.setCapability("browserstack.key", "Sinb4RuhiyWhbU32Wa2K");
-        options.setCapability("browserstack.local", "true");
-        options.setCapability("project", "Vanilla E2E");
-        options.setCapability("build", "Checkout Flow Test");
-        options.setCapability("name", "BS Vanilla Flow");
+        if (username == null || username.trim().isEmpty() ||
+                accessKey == null || accessKey.trim().isEmpty()) {
+            throw new IllegalArgumentException("Please set BROWSERSTACK_USERNAME and BROWSERSTACK_ACCESS_KEY.");
+        }
 
-        options.setCapability("browserstack.debug", "true");        // Enable visual logs (screenshots, etc.)
-        options.setCapability("browserstack.networkLogs", "true");  // Capture network traffic
+        MutableCapabilities caps = new MutableCapabilities();
 
+        caps.setCapability("platformName", "Android");
+        caps.setCapability("device", "Google Pixel 6");
+        caps.setCapability("os_version", "12.0");
+        caps.setCapability("deviceName", "Google Pixel 6"); // 🔥 Required!
+        caps.setCapability("app", "bs://e9e7e19a0331e9920b162afc2f06b8844c71e8b3");
 
-        // options.fullReset();
+        caps.setCapability("browserstack.user", username);
+        caps.setCapability("browserstack.key", accessKey);
+        caps.setCapability("browserstack.local", "false");
 
-        // Initialize the driver
-        //driver = new AndroidDriver(new URL("http://localhost:4723"), options);
-        // ✅ Initialize driver pointing to BrowserStack hub
-        driver = new AndroidDriver(new URL("http://somusurya_3yWHf1:Sinb4RuhiyWhbU32Wa2K@hub.browserstack.com/wd/hub"), options);
+        caps.setCapability("project", "Android E2E");
+        caps.setCapability("build", "Checkout Flow Test");
+        caps.setCapability("name", "BS Android Test Flow");
+
+        caps.setCapability("browserstack.debug", "true");
+        caps.setCapability("browserstack.networkLogs", "true");
+
+        String bsUrl = "http://" + username + ":" + accessKey + "@hub.browserstack.com/wd/hub";
+        driver = new AndroidDriver(new URL(bsUrl), caps);
+
         System.out.println("Appium driver started successfully.");
     }
 
-    @Test()
+    @Test
     public void testCheckoutFlow() throws InterruptedException {
+        System.out.println("Testing Started..");
 
-        // Step 1: Open app (already handled by setup)
-        System.out.println("Testing  Started..");
-
-        // Step 2: Navigate to the first product on the list
         WebElement firstProduct = driver.findElement(By.xpath("//android.widget.TextView[@text='Sauce Labs Backpack']"));
         firstProduct.click();
         Thread.sleep(1000);
 
-        // Step 3: Add quantity 2
         WebElement quantityIncreaseButton = driver.findElement(By.xpath("//android.view.ViewGroup[@content-desc='counter plus button']"));
-        quantityIncreaseButton.click(); // Increase quantity to 2
+        quantityIncreaseButton.click();
         Thread.sleep(1000);
 
-        // Step 4: Add to cart , go to cart & Proceed tp Checkout
         WebElement addToCartButton = driver.findElement(By.xpath("//android.widget.TextView[@text='Add To Cart']"));
         addToCartButton.click();
         Thread.sleep(2000);
@@ -83,9 +87,6 @@ public class androidDemoTest {
         proceedCheckout.click();
         Thread.sleep(2000);
 
-
-        // Step 5: Complete account creation
-        Thread.sleep(1000);
         WebElement emailField = driver.findElement(By.xpath("//android.widget.EditText[@content-desc= 'Username input field']"));
         WebElement passwordField = driver.findElement(By.xpath("//android.widget.EditText[@content-desc='Password input field']"));
         WebElement confirmLoginButton = driver.findElement(By.xpath("(//android.widget.TextView[@text='Login'])[2]"));
@@ -94,9 +95,6 @@ public class androidDemoTest {
         passwordField.sendKeys("10203040");
         confirmLoginButton.click();
         Thread.sleep(2000);
-
-
-        // Step 6: Complete checkout
 
         WebElement fullNameField = driver.findElement(By.xpath("//android.widget.EditText[@content-desc='Full Name* input field']"));
         WebElement addressLine1Field = driver.findElement(By.xpath("//android.widget.EditText[@content-desc='Address Line 1* input field']"));
@@ -111,10 +109,7 @@ public class androidDemoTest {
         zipCodeField.sendKeys("10001");
         countryField.sendKeys("United States");
         paymentButton.click();
-
         Thread.sleep(2000);
-
-        // Step 7: Verify /Assert - payment method and review order buttons
 
         WebElement paymentMethodText = driver.findElement(By.xpath("//android.widget.TextView[@text='Enter a payment method']"));
         WebElement reviewOrderButton = driver.findElement(By.xpath("//android.widget.TextView[@text='Review Order']"));
@@ -131,5 +126,4 @@ public class androidDemoTest {
             driver.quit();
         }
     }
-
 }
