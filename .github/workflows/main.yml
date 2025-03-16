@@ -1,4 +1,4 @@
-name: Android Appium Tests (Robust + Retry-Proof)
+name: Android Appium Tests (Fully Robust)
 
 on:
   push:
@@ -52,10 +52,12 @@ jobs:
             -port 5554 \
             -no-metrics &
 
-          echo "Waiting for emulator..."
+          echo "Waiting for emulator device..."
           adb wait-for-device
 
-          echo "Waiting for system to be fully booted..."
+      - name: Wait for Emulator Full Readiness (boot + package)
+        run: |
+          echo "Waiting for boot_completed..."
           boot_completed=""
           timeout=0
           max_wait=300
@@ -66,15 +68,22 @@ jobs:
             timeout=$((timeout + 5))
           done
 
-          echo "Unlocking emulator screen..."
+          echo "Unlocking screen..."
           adb shell input keyevent 82
 
-          echo "Waiting for settings service to be available..."
-          for i in {1..10}; do
-            adb shell service check settings && break
-            echo "⏳ Waiting for settings service..."
+          echo "Waiting for 'package' service..."
+          svc_timeout=0
+          while ! adb shell service check package | grep -q "found"; do
+            echo "⏳ Waiting for package manager..."
             sleep 5
+            svc_timeout=$((svc_timeout + 5))
+            if [ $svc_timeout -ge 120 ]; then
+              echo "❌ Timeout: 'package' service not available."
+              exit 1
+            fi
           done
+
+          echo "✅ Emulator fully ready. Proceeding."
 
       - name: Install Appium + UiAutomator2 Driver
         run: |
