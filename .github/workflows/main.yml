@@ -1,4 +1,4 @@
-name: Android Appium Tests (Cached AVD Reliable)
+name: Android Appium Tests (Using Cached AVD)
 
 on:
   push:
@@ -30,7 +30,7 @@ jobs:
           echo "$HOME/android-sdk/emulator" >> $GITHUB_PATH
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
 
-      - name: Install SDK minimal components
+      - name: Install SDK components
         run: |
           yes | sdkmanager --licenses
           sdkmanager "platform-tools" "platforms;android-30" "emulator"
@@ -41,11 +41,10 @@ jobs:
           name: android-avd
           path: ~/.android
 
-      - name: Boot Cached Android Emulator (with Extended Timeout)
+      - name: Boot Cached Android Emulator
         run: |
           $HOME/android-sdk/emulator/emulator \
             -avd test \
-            -no-snapshot \
             -no-window \
             -no-audio \
             -no-boot-anim \
@@ -53,11 +52,12 @@ jobs:
             -port 5554 \
             -no-metrics &
 
+          echo "Waiting for emulator to boot..."
           adb wait-for-device
 
           boot_completed=""
           timeout=0
-          max_wait=300  # Extended to 5 minutes for reliability
+          max_wait=300
 
           while [ "$boot_completed" != "1" ] && [ $timeout -lt $max_wait ]; do
             boot_completed=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
@@ -67,10 +67,10 @@ jobs:
           done
 
           if [ "$boot_completed" != "1" ]; then
-            echo "❌ Emulator failed to boot. Detailed debug info:"
+            echo "❌ Emulator failed to boot. Dumping logs..."
             adb devices
             adb shell getprop
-            adb shell logcat -d | tail -n 150
+            adb shell logcat -d | tail -n 100
             exit 1
           fi
 
@@ -87,7 +87,7 @@ jobs:
       - name: Wait for Appium
         run: |
           for i in {1..20}; do
-            nc -z localhost 4723 && echo "✅ Appium ready" && break
+            nc -z localhost 4723 && echo "✅ Appium is ready" && break
             echo "⏳ Waiting for Appium..."
             sleep 5
           done
