@@ -121,6 +121,16 @@
                 <version>3.0.0-M7</version>
                 <configuration>
                     <testFailureIgnore>true</testFailureIgnore>
+
+                    <!-- Specify your TestNG suite -->
+                    <suiteXmlFiles>
+                        <suiteXmlFile>testng-android.xml</suiteXmlFile>
+                    </suiteXmlFiles>
+
+                    <!-- Exclude the iOS test -->
+                    <excludes>
+                        <exclude>**/tests/iOSCheckoutTest.java</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
             <!-- Cucumber Reporting Plugin -->
