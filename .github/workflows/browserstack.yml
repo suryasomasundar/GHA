@@ -13,12 +13,8 @@ jobs:
       run:
         shell: bash
 
-    env:
-      BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
-      BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
-
     steps:
-    - name: 🔄 Checkout source code
+    - name: 🔄 Checkout code
       uses: actions/checkout@v3
 
     - name: 🧳 Cache Maven dependencies
@@ -36,19 +32,15 @@ jobs:
         java-version: '17'
 
     - name: 🧪 Run Appium Test on BrowserStack
+      working-directory: ./TestAppiumDemo
+      env:
+        BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+        BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
       run: |
-        echo "👉 Switching to TestAppiumDemo directory"
-        cd TestAppiumDemo || { echo "❌ TestAppiumDemo folder not found!"; exit 1; }
+        echo "✅ Running tests with:"
+        echo "BROWSERSTACK_USERNAME=$BROWSERSTACK_USERNAME"
+        echo "BROWSERSTACK_ACCESS_KEY=${BROWSERSTACK_ACCESS_KEY:0:4}********"
 
-        echo "👉 Running Maven tests on BrowserStack"
-        mvn -f pom.xml \
-            -Dtest=browserstack.androidTestFlow \
+        mvn -Dtest=browserstack.androidTestFlow \
             -DBROWSERSTACK_USERNAME=$BROWSERSTACK_USERNAME \
             -DBROWSERSTACK_ACCESS_KEY=$BROWSERSTACK_ACCESS_KEY test
-
-    - name: 📦 Archive Test Results (Optional)
-      if: always()
-      uses: actions/upload-artifact@v3
-      with:
-        name: surefire-reports
-        path: TestAppiumDemo/target/surefire-reports/
