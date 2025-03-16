@@ -1,4 +1,4 @@
-name: Android Appium Tests with Cached AVD (Single Workflow)
+name: Android Appium Tests (Single Job - All In One)
 
 on:
   push:
@@ -6,56 +6,9 @@ on:
   pull_request:
 
 jobs:
-  build-avd:
-    name: Build AVD
+  android-test:
     runs-on: macos-13
-    timeout-minutes: 20
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Java
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Install Android SDK Tools
-        run: |
-          mkdir -p $HOME/android-sdk/cmdline-tools
-          cd $HOME/android-sdk/cmdline-tools
-          curl -O https://dl.google.com/android/repository/commandlinetools-mac-9477386_latest.zip
-          unzip -q commandlinetools-mac-*.zip
-          mv cmdline-tools latest
-          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "$HOME/android-sdk/emulator" >> $GITHUB_PATH
-          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
-
-      - name: Install SDK & Create Emulator
-        run: |
-          yes | sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-30" "emulator" "system-images;android-30;google_apis;x86"
-          echo "no" | avdmanager create avd -n test -k "system-images;android-30;google_apis;x86" --device "pixel"
-
-          # Boot once to generate full snapshot files
-          nohup $HOME/android-sdk/emulator/emulator -avd test -no-window -gpu swiftshader_indirect &
-          adb wait-for-device
-          sleep 60
-          adb shell getprop sys.boot_completed
-          adb emu kill
-
-      - name: Upload AVD Snapshot
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-avd
-          path: /Users/runner/.android  # ✅ FIXED PATH
-
-  run-tests:
-    name: Run Appium Tests
-    runs-on: macos-13
-    needs: build-avd
-    timeout-minutes: 30
+    timeout-minutes: 35
 
     steps:
       - uses: actions/checkout@v4
@@ -77,18 +30,13 @@ jobs:
           echo "$HOME/android-sdk/emulator" >> $GITHUB_PATH
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
 
-      - name: Install SDK Essentials
+      - name: Install SDK + Create Emulator
         run: |
           yes | sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-30" "emulator"
+          sdkmanager "platform-tools" "platforms;android-30" "emulator" "system-images;android-30;google_apis;x86"
+          echo "no" | avdmanager create avd -n test -k "system-images;android-30;google_apis;x86" --device "pixel"
 
-      - name: Download Cached AVD
-        uses: actions/download-artifact@v4
-        with:
-          name: android-avd
-          path: /Users/runner/.android  # ✅ FIXED PATH
-
-      - name: Boot Cached Emulator
+      - name: Boot Emulator
         run: |
           $HOME/android-sdk/emulator/emulator \
             -avd test \
@@ -104,6 +52,7 @@ jobs:
           boot_completed=""
           timeout=0
           max_wait=300
+
           while [ "$boot_completed" != "1" ] && [ $timeout -lt $max_wait ]; do
             boot_completed=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
             echo "Boot status: $boot_completed"
@@ -119,7 +68,7 @@ jobs:
             exit 1
           fi
 
-          echo "✅ Emulator is ready."
+          echo "✅ Emulator booted successfully."
 
       - name: Install Appium
         run: |
@@ -137,7 +86,7 @@ jobs:
             sleep 5
           done
 
-      - name: Run Appium Cucumber Tests
+      - name: Run Android Appium Cucumber Tests
         run: |
           cd TestAppiumDemo
           mvn test
