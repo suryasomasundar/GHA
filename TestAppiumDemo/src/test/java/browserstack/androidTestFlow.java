@@ -52,9 +52,14 @@ public class androidTestFlow {
         caps.setCapability("browserstack.debug", "true");
         caps.setCapability("browserstack.networkLogs", "true");
 
+        String buildName = "CI Build #" + System.currentTimeMillis();
+        caps.setCapability("build", buildName);
+        log.info("📦 BrowserStack Build: {}", buildName);
+
         log.info("🚀 Launching Appium driver on BrowserStack...");
         driver = new AndroidDriver(new URL(BSConfigHelper.getHubUrl(username, accessKey)), caps);
         log.info("✅ Appium session started.");
+
     }
 
     @Test

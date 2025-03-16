@@ -55,6 +55,10 @@ public class iOSTestFlow {
         caps.setCapability("browserstack.debug", "true");
         caps.setCapability("browserstack.networkLogs", "true");
 
+        String buildName = "CI Build #" + System.currentTimeMillis();
+        caps.setCapability("build", buildName);
+        log.info("📦 BrowserStack Build: {}", buildName);
+
         log.info("🚀 Launching iOS Appium session on BrowserStack...");
         driver = new IOSDriver(new URL(BSConfigHelper.getHubUrl(username, accessKey)), caps);
         log.info("✅ iOS Appium session started.");
