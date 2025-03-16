@@ -1,12 +1,12 @@
-name: Run Appium Test on BrowserStack
+name: Run Appium Tests on BrowserStack
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
   workflow_dispatch:
 
 jobs:
-  run-browserstack-test:
+  run-browserstack-tests:
     runs-on: ubuntu-latest
 
     defaults:
@@ -17,6 +17,12 @@ jobs:
     - name: 🔄 Checkout code
       uses: actions/checkout@v3
 
+    - name: ☕ Set up Java 17
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
     - name: 🧳 Cache Maven dependencies
       uses: actions/cache@v3
       with:
@@ -25,22 +31,24 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-maven-
 
-    - name: ☕ Set up Java 17
-      uses: actions/setup-java@v3
-      with:
-        distribution: 'temurin'
-        java-version: '17'
-
-    - name: 🧪 Run Appium Test on BrowserStack
+    - name: 🤖 Run Android Test on BrowserStack
       working-directory: ./TestAppiumDemo
       env:
         BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
         BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
       run: |
-        echo "✅ Running tests with:"
-        echo "BROWSERSTACK_USERNAME=$BROWSERSTACK_USERNAME"
-        echo "BROWSERSTACK_ACCESS_KEY=${BROWSERSTACK_ACCESS_KEY:0:4}********"
-
+        echo "Running Android Test on BrowserStack..."
         mvn -Dtest=browserstack.androidTestFlow \
+            -DBROWSERSTACK_USERNAME=$BROWSERSTACK_USERNAME \
+            -DBROWSERSTACK_ACCESS_KEY=$BROWSERSTACK_ACCESS_KEY test
+
+    - name: 🍏 Run iOS Test on BrowserStack
+      working-directory: ./TestAppiumDemo
+      env:
+        BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+        BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+      run: |
+        echo "Running iOS Test on BrowserStack..."
+        mvn -Dtest=browserstack.iOSTestFlow \
             -DBROWSERSTACK_USERNAME=$BROWSERSTACK_USERNAME \
             -DBROWSERSTACK_ACCESS_KEY=$BROWSERSTACK_ACCESS_KEY test
