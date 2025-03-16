@@ -75,6 +75,8 @@ public class androidTestFlow {
     public void testCheckoutFlow() throws InterruptedException {
         System.out.println("Testing Started..");
 
+        Thread.sleep(9000);
+        
         WebElement firstProduct = driver.findElement(By.xpath("//android.widget.TextView[@text='Sauce Labs Backpack']"));
         firstProduct.click();
         Thread.sleep(1000);
