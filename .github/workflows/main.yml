@@ -3,7 +3,7 @@ name: Run Appium Tests (Android & iOS - Java)
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
 
 jobs:
@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Java
         uses: actions/setup-java@v3
@@ -27,7 +27,7 @@ jobs:
 
       # -------- ANDROID SETUP --------
       - name: Start Android Emulator (Port 5554)
-        uses: reactivecircus/android-emulator-runner@v2
+        uses: reactivecircus/android-emulator-runner@v2.30.1
         with:
           api-level: 34
           target: google_apis
@@ -76,7 +76,7 @@ jobs:
 
       - name: Upload Appium Logs
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: appium-logs
           path: appium.log
