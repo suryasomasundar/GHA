@@ -1,4 +1,4 @@
-name: Android Appium Tests (Fast Boot - Android 30)
+name: Android Appium Tests (Android 30 - google_apis;x86)
 
 on:
   push:
@@ -36,11 +36,11 @@ jobs:
       - name: Install Android SDK Packages
         run: |
           yes | sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-30" "emulator" "system-images;android-30;default;x86"
+          sdkmanager "platform-tools" "platforms;android-30" "emulator" "system-images;android-30;google_apis;x86"
 
-      - name: Create and Boot Android Emulator (API 30 - x86)
+      - name: Create and Boot Android Emulator (API 30 - google_apis;x86)
         run: |
-          echo "no" | avdmanager create avd -n test -k "system-images;android-30;default;x86" --device "pixel" --force
+          echo "no" | avdmanager create avd -n test -k "system-images;android-30;google_apis;x86" --device "pixel" --force
 
           $HOME/android-sdk/emulator/emulator \
             -avd test \
