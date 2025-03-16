@@ -3,6 +3,7 @@ package browserstack;
 import io.appium.java_client.AppiumDriver;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.android.options.UiAutomator2Options;
+import io.appium.java_client.ios.IOSDriver;
 import org.openqa.selenium.By;
 import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.WebElement;
@@ -18,7 +19,7 @@ import java.net.URL;
  * Updated to use environment variables for BrowserStack credentials.
  *
  * @author Somu
- * @since 14 Mar, 2025
+ * @since 15 Mar, 2025
  */
 
 public class androidTestFlow {
@@ -27,6 +28,7 @@ public class androidTestFlow {
 
     @BeforeClass
     public void setUp() throws Exception {
+        // 🔐 Load credentials with fallback to environment variables
         String username = System.getProperty("BROWSERSTACK_USERNAME", System.getenv("BROWSERSTACK_USERNAME"));
         String accessKey = System.getProperty("BROWSERSTACK_ACCESS_KEY", System.getenv("BROWSERSTACK_ACCESS_KEY"));
 
@@ -40,27 +42,33 @@ public class androidTestFlow {
 
         MutableCapabilities caps = new MutableCapabilities();
 
-        caps.setCapability("platformName", "Android");
-        caps.setCapability("device", "Google Pixel 6");
-        caps.setCapability("os_version", "12.0");
-        caps.setCapability("deviceName", "Google Pixel 6"); // 🔥 Required!
-        caps.setCapability("app", "bs://e9e7e19a0331e9920b162afc2f06b8844c71e8b3");
+        // ✅ iOS device and app config
+        caps.setCapability("platformName", "iOS");
+        caps.setCapability("device", "iPhone 14");
+        caps.setCapability("os_version", "16");
+        caps.setCapability("deviceName", "iPhone 14"); // Required by Appium
+        caps.setCapability("automationName", "XCUITest");
 
+        // ✅ Use your uploaded .ipa app from BrowserStack
+        caps.setCapability("app", "bs://07a684db2885271dbfbc4d039410661de28515c3");
+
+        // ✅ Auth and metadata
         caps.setCapability("browserstack.user", username);
         caps.setCapability("browserstack.key", accessKey);
         caps.setCapability("browserstack.local", "false");
 
-        caps.setCapability("project", "Android E2E");
-        caps.setCapability("build", "Checkout Flow Test");
-        caps.setCapability("name", "BS Android Test Flow");
+        caps.setCapability("project", "iOS E2E");
+        caps.setCapability("build", "iOS Checkout Flow");
+        caps.setCapability("name", "BS iOS Test Flow");
 
         caps.setCapability("browserstack.debug", "true");
         caps.setCapability("browserstack.networkLogs", "true");
 
+        // ✅ Initialize iOSDriver with full URL
         String bsUrl = "http://" + username + ":" + accessKey + "@hub.browserstack.com/wd/hub";
-        driver = new AndroidDriver(new URL(bsUrl), caps);
+        driver = new IOSDriver(new URL(bsUrl), caps);
 
-        System.out.println("Appium driver started successfully.");
+        System.out.println("iOS Appium session started successfully.");
     }
 
     @Test
